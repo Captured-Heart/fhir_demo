@@ -1,3 +1,8 @@
+import 'package:fhir_demo/src/controller/observations_controller.dart';
+import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
@@ -16,36 +21,22 @@ class ObservationsView extends ConsumerStatefulWidget {
 }
 
 class _ObservationsViewState extends ConsumerState<ObservationsView> {
-  final _formKey = GlobalKey<FormState>();
-  final _patientIdController = TextEditingController();
-  final _bloodPressureController = TextEditingController();
-  final _heartRateController = TextEditingController();
-  final _temperatureController = TextEditingController();
-  final _respiratoryRateController = TextEditingController();
-  final _oxygenSaturationController = TextEditingController();
-  final _weightController = TextEditingController();
-  final _heightController = TextEditingController();
-  final _notesController = TextEditingController();
-  final _observationDateController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => showInstructionDialog(
+        context: context,
+        title: 'Observations',
+        subtitle: 'Fill out the form to record new observations in the system. ',
+        sharedKeys: SharedKeys.observationInstructionDontShowAgain,
+      ),
+    );
+  }
 
   ButtonState _submitState = ButtonState.initial;
 
-  @override
-  void dispose() {
-    _patientIdController.dispose();
-    _bloodPressureController.dispose();
-    _heartRateController.dispose();
-    _temperatureController.dispose();
-    _respiratoryRateController.dispose();
-    _oxygenSaturationController.dispose();
-    _weightController.dispose();
-    _heightController.dispose();
-    _notesController.dispose();
-    _observationDateController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _selectDate() async {
+  Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -53,13 +44,13 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      _observationDateController.text =
-          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      onPicked?.call(picked);
     }
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
+    final observationCtrl = ref.read(observationsController.notifier);
+    if (observationCtrl.formKey.currentState!.validate()) {
       setState(() => _submitState = ButtonState.loading);
 
       // TODO: Implement FHIR observation submission
@@ -77,36 +68,31 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
   }
 
   void _clearForm() {
-    _formKey.currentState?.reset();
-    _patientIdController.clear();
-    _bloodPressureController.clear();
-    _heartRateController.clear();
-    _temperatureController.clear();
-    _respiratoryRateController.clear();
-    _oxygenSaturationController.clear();
-    _weightController.clear();
-    _heightController.clear();
-    _notesController.clear();
-    _observationDateController.clear();
+    final observationCtrl = ref.read(observationsController.notifier);
+    observationCtrl.clearForm();
   }
 
   @override
   Widget build(BuildContext context) {
+    final observationCtrl = ref.watch(observationsController.notifier);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Vital Signs'),
         backgroundColor: const Color(0xffE91E63),
         foregroundColor: AppColors.kWhite,
+        actions: [AppBarServerSwitch()],
       ),
       body: SafeArea(
         child: Form(
-          key: _formKey,
+          key: observationCtrl.formKey,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
+                SelectedServerText(),
                 // Header
                 MoodText.text(
                   text: 'Patient Vital Signs',
@@ -118,7 +104,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Patient ID *',
                   hintText: 'Enter patient identifier',
-                  controller: _patientIdController,
+                  controller: observationCtrl.patientIdController,
                   prefixIcon: const Icon(Icons.person),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -132,7 +118,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Observation Date *',
                   hintText: 'YYYY-MM-DD',
-                  controller: _observationDateController,
+                  controller: observationCtrl.observationDateController,
                   readOnly: true,
                   onTap: _selectDate,
                   suffixIcon: const Icon(Icons.calendar_today),
@@ -148,7 +134,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Blood Pressure',
                   hintText: 'e.g., 120/80 mmHg',
-                  controller: _bloodPressureController,
+                  controller: observationCtrl.bloodPressureController,
                   prefixIcon: const Icon(Icons.favorite),
                 ),
 
@@ -156,7 +142,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Heart Rate',
                   hintText: 'e.g., 72 bpm',
-                  controller: _heartRateController,
+                  controller: observationCtrl.heartRateController,
                   keyboardType: TextInputType.number,
                   prefixIcon: const Icon(Icons.monitor_heart),
                 ),
@@ -165,7 +151,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Temperature',
                   hintText: 'e.g., 37.0 °C',
-                  controller: _temperatureController,
+                  controller: observationCtrl.temperatureController,
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   prefixIcon: const Icon(Icons.thermostat),
                 ),
@@ -174,7 +160,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Respiratory Rate',
                   hintText: 'e.g., 16 breaths/min',
-                  controller: _respiratoryRateController,
+                  controller: observationCtrl.respiratoryRateController,
                   keyboardType: TextInputType.number,
                   prefixIcon: const Icon(Icons.air),
                 ),
@@ -183,7 +169,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Oxygen Saturation',
                   hintText: 'e.g., 98%',
-                  controller: _oxygenSaturationController,
+                  controller: observationCtrl.oxygenSaturationController,
                   keyboardType: TextInputType.number,
                   prefixIcon: const Icon(Icons.opacity),
                 ),
@@ -192,7 +178,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Weight',
                   hintText: 'e.g., 70 kg',
-                  controller: _weightController,
+                  controller: observationCtrl.weightController,
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   prefixIcon: const Icon(Icons.scale),
                 ),
@@ -201,7 +187,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Height',
                   hintText: 'e.g., 170 cm',
-                  controller: _heightController,
+                  controller: observationCtrl.heightController,
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   prefixIcon: const Icon(Icons.height),
                 ),
@@ -210,7 +196,7 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
                 MoodTextfield(
                   labelText: 'Clinical Notes',
                   hintText: 'Enter additional observations',
-                  controller: _notesController,
+                  controller: observationCtrl.notesController,
                   textCapitalization: TextCapitalization.sentences,
                   maxLines: 3,
                   prefixIcon: const Icon(Icons.notes),

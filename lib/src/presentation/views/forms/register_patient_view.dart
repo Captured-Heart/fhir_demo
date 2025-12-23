@@ -1,4 +1,8 @@
 import 'package:fhir_demo/src/controller/patient_controller.dart';
+import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:fhir_demo/utils/validations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +23,19 @@ class RegisterPatientView extends ConsumerStatefulWidget {
 }
 
 class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => showInstructionDialog(
+        context: context,
+        title: 'Register Patient',
+        subtitle: 'Fill out the form to register a new patient in the system. ',
+        sharedKeys: SharedKeys.patientInstructionDontShowAgain,
+      ),
+    );
+  }
+
   Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -34,13 +51,15 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
 
   @override
   Widget build(BuildContext context) {
-    final patientCtrl = ref.read(patientProvider.notifier);
-    final patientState = ref.watch(patientProvider);
+    final patientCtrl = ref.read(patientController.notifier);
+    final patientState = ref.watch(patientController);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Register Patient'),
         backgroundColor: const Color(0xff4CAF50),
         foregroundColor: AppColors.kWhite,
+        actions: [AppBarServerSwitch()],
       ),
       body: SafeArea(
         child: Form(
@@ -52,6 +71,7 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
+                SelectedServerText(),
                 // Header
                 MoodText.text(
                   text: 'Patient Information',
@@ -161,6 +181,7 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   keyboardType: TextInputType.streetAddress,
                   textCapitalization: TextCapitalization.words,
                   maxLines: 3,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.home),
                 ),
 
@@ -181,19 +202,17 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   onPressed:
                       () => patientCtrl.submitForm(
                         onGenderValidationFailed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: MoodText.text(
-                                text: 'Please select a gender',
-                                context: context,
-                                textStyle: context.textTheme.bodyMedium?.copyWith(color: AppColors.kWhite),
-                              ),
-                              backgroundColor: context.colorScheme.error,
-                            ),
-                          );
+                          context.showSnackBar(message: 'Please select a gender', isError: true);
+                        },
+                        onSuccess: () {
+                          context.showSnackBar(message: 'Patient registered successfully');
+                          Navigator.pop(context);
+                        },
+                        onError: () {
+                          context.showSnackBar(message: 'Failed to register patient', isError: true);
                         },
                       ),
-                  state: patientState.isLoading ? ButtonState.loading : ButtonState.initial,
+                  state: patientState.isLoading ? ButtonState.loading : ButtonState.loaded,
                   bGcolor: const Color(0xff4CAF50),
                 ),
 

@@ -1,3 +1,8 @@
+import 'package:fhir_demo/src/controller/appointments_controller.dart';
+import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
@@ -17,32 +22,22 @@ class AppointmentsView extends ConsumerStatefulWidget {
 }
 
 class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
-  final _formKey = GlobalKey<FormState>();
-  final _patientIdController = TextEditingController();
-  final _doctorController = TextEditingController();
-  final _appointmentDateController = TextEditingController();
-  final _appointmentTimeController = TextEditingController();
-  final _reasonController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _notesController = TextEditingController();
-
-  ButtonState _submitState = ButtonState.initial;
-  String? _selectedType;
-  String? _selectedStatus;
-
   @override
-  void dispose() {
-    _patientIdController.dispose();
-    _doctorController.dispose();
-    _appointmentDateController.dispose();
-    _appointmentTimeController.dispose();
-    _reasonController.dispose();
-    _locationController.dispose();
-    _notesController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => showInstructionDialog(
+        context: context,
+        title: 'Appointments',
+        subtitle: 'Fill out the form to schedule a new appointment in the system. ',
+        sharedKeys: SharedKeys.appointmentInstructionDontShowAgain,
+      ),
+    );
   }
 
-  Future<void> _selectDate() async {
+  ButtonState _submitState = ButtonState.initial;
+
+  Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -50,21 +45,20 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
-      _appointmentDateController.text =
-          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      onPicked?.call(picked);
     }
   }
 
-  Future<void> _selectTime() async {
+  Future<void> _selectTime({Function(TimeOfDay?)? onPicked}) async {
     final TimeOfDay? picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (picked != null) {
-      _appointmentTimeController.text =
-          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      onPicked?.call(picked);
     }
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
+    final appointmentCtrl = ref.read(appointmentsController.notifier);
+    if (appointmentCtrl.formKey.currentState!.validate()) {
       setState(() => _submitState = ButtonState.loading);
 
       // TODO: Implement FHIR appointment submission
@@ -82,37 +76,31 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
   }
 
   void _clearForm() {
-    _formKey.currentState?.reset();
-    _patientIdController.clear();
-    _doctorController.clear();
-    _appointmentDateController.clear();
-    _appointmentTimeController.clear();
-    _reasonController.clear();
-    _locationController.clear();
-    _notesController.clear();
-    setState(() {
-      _selectedType = null;
-      _selectedStatus = null;
-    });
+    ref.read(appointmentsController.notifier).clearForm();
   }
 
   @override
   Widget build(BuildContext context) {
+    final appointmentCtrl = ref.watch(appointmentsController.notifier);
+    final state = ref.watch(appointmentsController);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Schedule Appointment'),
         backgroundColor: const Color(0xff9C27B0),
         foregroundColor: AppColors.kWhite,
+        actions: [AppBarServerSwitch()],
       ),
       body: SafeArea(
         child: Form(
-          key: _formKey,
+          key: appointmentCtrl.formKey,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
+                SelectedServerText(),
                 // Header
                 MoodText.text(
                   text: 'Appointment Details',
@@ -124,7 +112,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 MoodTextfield(
                   labelText: 'Patient ID *',
                   hintText: 'Enter patient identifier',
-                  controller: _patientIdController,
+                  controller: appointmentCtrl.patientIdController,
                   prefixIcon: const Icon(Icons.person),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -138,7 +126,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 MoodTextfield(
                   labelText: 'Doctor/Practitioner *',
                   hintText: 'Enter doctor name',
-                  controller: _doctorController,
+                  controller: appointmentCtrl.doctorController,
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.local_hospital),
                   validator: (value) {
@@ -167,7 +155,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: _selectedType,
+                          value: state.selectedType,
                           hint: const Text('Select type'),
                           isExpanded: true,
                           items:
@@ -175,7 +163,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                                 return DropdownMenuItem(value: type, child: Text(type));
                               }).toList(),
                           onChanged: (value) {
-                            setState(() => _selectedType = value);
+                            appointmentCtrl.setSelectedType(value);
                           },
                         ),
                       ),
@@ -187,7 +175,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 MoodTextfield(
                   labelText: 'Appointment Date *',
                   hintText: 'YYYY-MM-DD',
-                  controller: _appointmentDateController,
+                  controller: appointmentCtrl.appointmentDateController,
                   readOnly: true,
                   onTap: _selectDate,
                   suffixIcon: const Icon(Icons.calendar_today),
@@ -203,7 +191,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 MoodTextfield(
                   labelText: 'Appointment Time *',
                   hintText: 'HH:MM',
-                  controller: _appointmentTimeController,
+                  controller: appointmentCtrl.appointmentTimeController,
                   readOnly: true,
                   onTap: _selectTime,
                   suffixIcon: const Icon(Icons.access_time),
@@ -233,7 +221,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: _selectedStatus,
+                          value: state.selectedStatus,
                           hint: const Text('Select status'),
                           isExpanded: true,
                           items:
@@ -241,7 +229,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                                 return DropdownMenuItem(value: status, child: Text(status));
                               }).toList(),
                           onChanged: (value) {
-                            setState(() => _selectedStatus = value);
+                            appointmentCtrl.setSelectedStatus(value);
                           },
                         ),
                       ),
@@ -253,9 +241,9 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 MoodTextfield(
                   labelText: 'Reason for Visit *',
                   hintText: 'Enter reason for appointment',
-                  controller: _reasonController,
                   textCapitalization: TextCapitalization.sentences,
                   maxLines: 2,
+                  controller: appointmentCtrl.reasonController,
                   prefixIcon: const Icon(Icons.description),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -269,7 +257,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 MoodTextfield(
                   labelText: 'Location',
                   hintText: 'Enter appointment location',
-                  controller: _locationController,
+                  controller: appointmentCtrl.locationController,
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.location_on),
                 ),
@@ -278,7 +266,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 MoodTextfield(
                   labelText: 'Additional Notes',
                   hintText: 'Enter any additional notes',
-                  controller: _notesController,
+                  controller: appointmentCtrl.notesController,
                   textCapitalization: TextCapitalization.sentences,
                   maxLines: 3,
                   prefixIcon: const Icon(Icons.notes),

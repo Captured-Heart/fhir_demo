@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +35,14 @@ extension ThemeExtensions on BuildContext {
         duration: const Duration(milliseconds: 1500),
       ),
     );
+  }
+}
+
+extension LogErrorExtension on String {
+  void logError({String? name}) {
+    if (kDebugMode) {
+      log(this, name: name ?? '');
+    }
   }
 }
 

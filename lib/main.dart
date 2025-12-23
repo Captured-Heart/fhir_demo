@@ -1,3 +1,4 @@
+import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ import 'package:fhir_demo/src/presentation/widgets/themes/app_themes.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await SharedPrefsUtil.init(); 
 
   await CacheHelper.openHiveBoxes();
   runApp(

@@ -6,10 +6,6 @@ class ApiConstants {
   static const bool isDevelopment = kDebugMode;
   static const bool isProduction = false;
 
-  // API URLs
-  static const String baseUrl = 'https://openlibrary.org';
-  // static const String authUrl = '';
-
   // Request Configuration
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 15);
@@ -29,6 +25,8 @@ class ApiConstants {
     'Content-Type': 'application/fhir+json',
     'Accept': 'application/fhir+json',
   };
+
+  static const String projectIdentifier = 'fhirdemoproject';
 
   // Error Messages
   static const String networkError = 'Network connection failed. Please check your internet.';

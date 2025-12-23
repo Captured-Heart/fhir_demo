@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:developer';
-import 'package:fhir_demo/constants/api_url.dart';
+import 'package:fhir_demo/constants/fhir_server_type_enum.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/hive_helper/cache_helper.dart';
@@ -73,10 +72,19 @@ class FhirSettingsNotifier extends AutoDisposeNotifier<FhirSettingsEntity> {
   }
 
   /// Update server type
-  Future<void> updateServerType(FhirServerType serverType) async {
-    _serverUrlController.text = serverType.baseUrl;
-    state = state.copyWith(serverType: serverType.name, serverBaseUrl: serverType.baseUrl);
-    await _saveSettings();
+  Future<bool> updateServerType(FhirServerType serverType) async {
+    try {
+      print('[FHIR Settings] Updating server type to: ${serverType.name} with URL: ${serverType.baseUrl}');
+      _serverUrlController.text = serverType.baseUrl;
+      state = state.copyWith(serverType: serverType.name, serverBaseUrl: serverType.baseUrl);
+      await _saveSettings();
+      print('[FHIR Settings] Server type updated. New state: ${state.serverBaseUrl}');
+      return Future.delayed(const Duration(milliseconds: 800), () {
+        return true;
+      });
+    } catch (e) {
+      return false;
+    }
   }
 
   /// Reset to default HAPI settings

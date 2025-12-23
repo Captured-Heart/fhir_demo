@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:fhir_demo/src/domain/entities/api_response.dart';
 
@@ -7,12 +9,18 @@ import 'package:fhir_demo/src/domain/repository/network/connectivity_repository.
 import 'package:fhir_demo/src/domain/repository/network/dio_repository.dart';
 
 final networkCallsRepositoryProvider = Provider<NetworkCallsRepository>((ref) {
-  final dioRepository = ref.read(dioRepositoryProvider);
+  final dioRepository = ref.watch(dioRepositoryProvider);
   final connectivityRepository = ref.read(connectivityRepositoryProvider);
   return NetworkCallsRepositoryImplementation(dioRepository, connectivityRepository);
 });
 
 abstract class NetworkCallsRepository {
+  // Header Management
+  void updateHeaders(Map<String, dynamic> headers);
+  void addHeader(String key, dynamic value);
+  void removeHeader(String key);
+  Map<String, dynamic> getCurrentHeaders();
+
   // sends a GET request
   Future<ApiResponse<T>> get<T>(
     String path, {
@@ -50,6 +58,27 @@ class NetworkCallsRepositoryImplementation implements NetworkCallsRepository {
   final ConnectivityRepository _connectivityRepository;
 
   NetworkCallsRepositoryImplementation(this._dioRepository, this._connectivityRepository);
+
+  // Header Management Methods
+  @override
+  void updateHeaders(Map<String, dynamic> headers) {
+    _dioRepository.updateHeaders(headers);
+  }
+
+  @override
+  void addHeader(String key, dynamic value) {
+    _dioRepository.addHeader(key, value);
+  }
+
+  @override
+  void removeHeader(String key) {
+    _dioRepository.removeHeader(key);
+  }
+
+  @override
+  Map<String, dynamic> getCurrentHeaders() {
+    return _dioRepository.getCurrentHeaders();
+  }
 
   @override
   Future<ApiResponse<T>> get<T>(
@@ -109,6 +138,7 @@ class NetworkCallsRepositoryImplementation implements NetworkCallsRepository {
           );
           return ApiResponse.success(response.data as T, statusCode: response.statusCode);
         } catch (e) {
+          log('what is the error $e');
           return DioExceptionHandler.handleDioException<T>(e);
         }
       },

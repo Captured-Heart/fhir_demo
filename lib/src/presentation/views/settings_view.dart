@@ -1,7 +1,8 @@
-import 'package:fhir_demo/constants/api_url.dart';
 import 'package:fhir_demo/constants/button_state.dart';
+import 'package:fhir_demo/constants/fhir_server_type_enum.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/primary_button.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/custom_screen_header.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,41 +71,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header Section
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.kPrimary, AppColors.kPrimaryContainer],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 4,
-                    children: [
-                      MoodText.text(
-                        text: 'Settings',
-                        context: context,
-                        textStyle: context.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.kWhite,
-                        ),
-                      ),
-                      MoodText.text(
-                        text: 'Configure FHIR server connection',
-                        context: context,
-                        textStyle: context.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.kWhite.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Icon(Icons.settings, color: AppColors.kWhite, size: 32),
-                ],
-              ).padSymmetric(horizontal: 20, vertical: 12),
+            CustomScreenHeader(
+              title: 'Settings',
+              subtitle: 'Configure FHIR server connection',
+              trailing: Icon(Icons.settings, color: AppColors.kWhite, size: 28),
             ),
 
             // Settings Content
@@ -210,7 +180,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         MoodPrimaryButton(
                           onPressed: _isTestingConnection ? null : _testConnection,
                           state: _isTestingConnection ? ButtonState.loading : ButtonState.loaded,
-                          icon: const Icon(Icons.wifi_tethering),
+                          icon: const Icon(Icons.wifi_tethering, color: AppColors.kWhite),
                           title: 'Test Connection',
                         ),
 

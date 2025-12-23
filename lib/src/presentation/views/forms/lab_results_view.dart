@@ -1,3 +1,8 @@
+import 'package:fhir_demo/src/controller/lab_results_controller.dart';
+import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
@@ -17,38 +22,22 @@ class LabResultsView extends ConsumerStatefulWidget {
 }
 
 class _LabResultsViewState extends ConsumerState<LabResultsView> {
-  final _formKey = GlobalKey<FormState>();
-  final _patientIdController = TextEditingController();
-  final _testNameController = TextEditingController();
-  final _testCodeController = TextEditingController();
-  final _resultValueController = TextEditingController();
-  final _unitController = TextEditingController();
-  final _referenceRangeController = TextEditingController();
-  final _specimenController = TextEditingController();
-  final _performerController = TextEditingController();
-  final _testDateController = TextEditingController();
-  final _notesController = TextEditingController();
-
-  ButtonState _submitState = ButtonState.initial;
-  String? _selectedInterpretation;
-  String? _selectedStatus;
-
   @override
-  void dispose() {
-    _patientIdController.dispose();
-    _testNameController.dispose();
-    _testCodeController.dispose();
-    _resultValueController.dispose();
-    _unitController.dispose();
-    _referenceRangeController.dispose();
-    _specimenController.dispose();
-    _performerController.dispose();
-    _testDateController.dispose();
-    _notesController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => showInstructionDialog(
+        context: context,
+        title: 'Lab Results',
+        subtitle: 'Fill out the form to record new Lab Results in the system. ',
+        sharedKeys: SharedKeys.laboratoryInstructionDontShowAgain,
+      ),
+    );
   }
 
-  Future<void> _selectDate() async {
+  ButtonState _submitState = ButtonState.initial;
+
+  Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -56,13 +45,13 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      _testDateController.text =
-          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      onPicked?.call(picked);
     }
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
+    final labResultsCtrl = ref.read(labResultsController.notifier);
+    if (labResultsCtrl.formKey.currentState!.validate()) {
       setState(() => _submitState = ButtonState.loading);
 
       // TODO: Implement FHIR lab result submission
@@ -80,40 +69,31 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
   }
 
   void _clearForm() {
-    _formKey.currentState?.reset();
-    _patientIdController.clear();
-    _testNameController.clear();
-    _testCodeController.clear();
-    _resultValueController.clear();
-    _unitController.clear();
-    _referenceRangeController.clear();
-    _specimenController.clear();
-    _performerController.clear();
-    _testDateController.clear();
-    _notesController.clear();
-    setState(() {
-      _selectedInterpretation = null;
-      _selectedStatus = null;
-    });
+    ref.read(labResultsController.notifier).clearForm();
   }
 
   @override
   Widget build(BuildContext context) {
+    final labResultsCtrl = ref.watch(labResultsController.notifier);
+    final labResultState = ref.watch(labResultsController);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lab Results'),
         backgroundColor: const Color(0xff00BCD4),
         foregroundColor: AppColors.kWhite,
+        actions: [AppBarServerSwitch()],
       ),
       body: SafeArea(
         child: Form(
-          key: _formKey,
+          key: labResultsCtrl.formKey,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
+                SelectedServerText(),
                 // Header
                 MoodText.text(
                   text: 'Laboratory Test Results',
@@ -125,7 +105,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Patient ID *',
                   hintText: 'Enter patient identifier',
-                  controller: _patientIdController,
+                  controller: labResultsCtrl.patientIdController,
                   prefixIcon: const Icon(Icons.person),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -139,7 +119,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Test Name *',
                   hintText: 'e.g., Complete Blood Count',
-                  controller: _testNameController,
+                  controller: labResultsCtrl.testNameController,
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.science),
                   validator: (value) {
@@ -154,7 +134,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Test Code',
                   hintText: 'e.g., CBC-001',
-                  controller: _testCodeController,
+                  controller: labResultsCtrl.testCodeController,
                   prefixIcon: const Icon(Icons.qr_code),
                 ),
 
@@ -162,7 +142,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Test Date *',
                   hintText: 'YYYY-MM-DD',
-                  controller: _testDateController,
+                  controller: labResultsCtrl.testDateController,
                   readOnly: true,
                   onTap: _selectDate,
                   suffixIcon: const Icon(Icons.calendar_today),
@@ -178,7 +158,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Result Value *',
                   hintText: 'Enter test result',
-                  controller: _resultValueController,
+                  controller: labResultsCtrl.resultValueController,
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   prefixIcon: const Icon(Icons.analytics),
                   validator: (value) {
@@ -193,7 +173,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Unit *',
                   hintText: 'e.g., mg/dL, mmol/L',
-                  controller: _unitController,
+                  controller: labResultsCtrl.unitController,
                   prefixIcon: const Icon(Icons.straighten),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -207,7 +187,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Reference Range',
                   hintText: 'e.g., 70-100 mg/dL',
-                  controller: _referenceRangeController,
+                  controller: labResultsCtrl.referenceRangeController,
                   prefixIcon: const Icon(Icons.compare_arrows),
                 ),
 
@@ -224,12 +204,12 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
                         borderRadius: AppSpacings.borderRadiusk20All,
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: _selectedInterpretation,
+                          value: labResultState.selectedInterpretation,
                           hint: const Text('Select interpretation'),
                           isExpanded: true,
                           items:
@@ -237,7 +217,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                                 return DropdownMenuItem(value: interpretation, child: Text(interpretation));
                               }).toList(),
                           onChanged: (value) {
-                            setState(() => _selectedInterpretation = value);
+                            labResultsCtrl.setSelectedInterpretation(value);
                           },
                         ),
                       ),
@@ -258,12 +238,12 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
                         borderRadius: AppSpacings.borderRadiusk20All,
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: _selectedStatus,
+                          value: labResultState.selectedStatus,
                           hint: const Text('Select status'),
                           isExpanded: true,
                           items:
@@ -271,7 +251,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                                 return DropdownMenuItem(value: status, child: Text(status));
                               }).toList(),
                           onChanged: (value) {
-                            setState(() => _selectedStatus = value);
+                            labResultsCtrl.setSelectedStatus(value);
                           },
                         ),
                       ),
@@ -283,7 +263,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Specimen Type',
                   hintText: 'e.g., Blood, Urine',
-                  controller: _specimenController,
+                  controller: labResultsCtrl.specimenController,
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.biotech),
                 ),
@@ -292,7 +272,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Performer/Laboratory',
                   hintText: 'Enter lab or performer name',
-                  controller: _performerController,
+                  controller: labResultsCtrl.performerController,
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.business),
                 ),
@@ -301,7 +281,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 MoodTextfield(
                   labelText: 'Clinical Notes',
                   hintText: 'Enter additional notes',
-                  controller: _notesController,
+                  controller: labResultsCtrl.notesController,
                   textCapitalization: TextCapitalization.sentences,
                   maxLines: 3,
                   prefixIcon: const Icon(Icons.notes),

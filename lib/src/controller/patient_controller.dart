@@ -1,10 +1,14 @@
+import 'dart:developer';
+
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_demo/hive_helper/cache_helper.dart';
+import 'package:fhir_demo/src/domain/entities/project_patient_entity.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/patient_repository.dart';
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final patientProvider = NotifierProvider.autoDispose<PatientNotifier, PatientNotifierState>(PatientNotifier.new);
+final patientController = NotifierProvider.autoDispose<PatientNotifier, PatientNotifierState>(PatientNotifier.new);
 
 class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
   late TextEditingController _firstNameController;
@@ -66,19 +70,68 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
     state = state.copyWith(selectedGender: gender);
   }
 
-  FutureVoid submitForm({VoidCallback? onGenderValidationFailed}) async {
+  // Fetch all patients by identifier
+  FutureVoid fetchPatientsByIdentifier() async {
+    try {
+      ref.invalidateSelf();
+      state = state.copyWith(isLoading: true);
+      final result = await _patientRepository.getAllPatientsByIdentifier();
+      if (result.isSuccess) {
+        state = state.copyWith(patientList: result.safeData, isLoading: false);
+        // Handle the fetched patients data as needed
+      } else {
+        log('Failed to fetch patients: ${result.toString()}');
+        state = state.copyWith(patientList: [], isLoading: false);
+      }
+    } catch (e) {
+      log('Error fetching patients by identifier: $e');
+      state = state.copyWith(patientList: [], isLoading: false);
+
+      // Handle exceptions
+    }
+  }
+
+  FutureVoid submitForm({
+    VoidCallback? onGenderValidationFailed,
+    VoidCallback? onSuccess,
+    VoidCallback? onError,
+  }) async {
     if (_patientFormKey.currentState!.validate()) {
       if (state.selectedGender == null) {
         onGenderValidationFailed?.call();
         return;
       }
+
       state = state.copyWith(isLoading: true);
       try {
-        // final result = await _patientRepository.createPatient();
+        final result = await _patientRepository.createPatient(
+          ProjectPatientEntity(
+            id: CacheHelper.currentUser?.id ?? '',
+            firstName: _firstNameController.text,
+            lastName: _lastNameController.text,
+            dateOfBirth: DateTime.parse(_dateOfBirthController.text),
+            phoneNumber: _phoneController.text,
+            gender: state.selectedGender,
+            email: _emailController.text.isNotEmpty ? _emailController.text : '',
+            address: _addressController.text.isNotEmpty ? _addressController.text : '',
+            emergencyContactNo: _emergencyContactController.text.isNotEmpty ? _emergencyContactController.text : null,
+          ),
+        );
+
+        if (result.isSuccess) {
+          log('it was successful');
+          clearForm();
+          onSuccess?.call();
+          return;
+        } else {
+          onError?.call();
+          log('Failed to create patient: ${result.toString()}');
+        }
         //
-        clearForm();
       } catch (e) {
+        log('what is the error in patient controller $e');
         // Handle errors here
+        state = state.copyWith(isLoading: false);
       } finally {
         state = state.copyWith(isLoading: false);
       }
@@ -89,13 +142,15 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
 class PatientNotifierState {
   final bool isLoading;
   final String? selectedGender;
+  final List<Patient> patientList;
 
-  PatientNotifierState({this.isLoading = false, this.selectedGender});
+  PatientNotifierState({this.isLoading = false, this.selectedGender, this.patientList = const []});
 
-  PatientNotifierState copyWith({bool? isLoading, String? selectedGender}) {
+  PatientNotifierState copyWith({bool? isLoading, String? selectedGender, List<Patient>? patientList}) {
     return PatientNotifierState(
       isLoading: isLoading ?? this.isLoading,
       selectedGender: selectedGender ?? this.selectedGender,
+      patientList: patientList ?? this.patientList,
     );
   }
 }

@@ -11,7 +11,13 @@ final dioRepositoryProvider = Provider<DioRepository>((ref) {
   final fhirSettings = ref.watch(fhirSettingsProvider);
   final repository = DioRepositoryImpl(tokenRepository, fhirSettings.serverBaseUrl);
 
+  print('[DIO Provider] Creating DioRepository with base URL: ${fhirSettings.serverBaseUrl}');
+
+  // Initialize eagerly
+  repository.initialize();
+
   ref.listen<String>(fhirSettingsProvider.select((settings) => settings.serverBaseUrl), (previous, next) {
+    print('[DIO Provider] Base URL changed from $previous to $next');
     if (previous != next) {
       repository.updateBaseUrl(next);
     }
@@ -22,6 +28,12 @@ final dioRepositoryProvider = Provider<DioRepository>((ref) {
 
 abstract class DioRepository {
   Future<void> initialize();
+
+  // Configuration Methods
+  void updateHeaders(Map<String, dynamic> headers);
+  void addHeader(String key, dynamic value);
+  void removeHeader(String key);
+  Map<String, dynamic> getCurrentHeaders();
 
   // HTTP Methods
   Future<Response<T>> get<T>(
@@ -76,6 +88,8 @@ class DioRepositoryImpl extends DioRepository {
     if (_isInitialized) {
       _dio.options.baseUrl = newBaseUrl;
       print('[DIO] Base URL updated to: $newBaseUrl');
+    } else {
+      print('[DIO] Dio not initialized yet. Base URL will be: $newBaseUrl on initialization');
     }
   }
 
@@ -88,6 +102,39 @@ class DioRepositoryImpl extends DioRepository {
       _dio.options.sendTimeout = duration;
       print('[DIO] Timeout updated to: ${timeoutSeconds}s');
     }
+  }
+
+  /// Update all headers at once
+  @override
+  void updateHeaders(Map<String, dynamic> headers) {
+    if (_isInitialized) {
+      _dio.options.headers.addAll(headers);
+      print('[DIO] Headers updated: ${headers.keys.join(", ")}');
+    }
+  }
+
+  /// Add or update a single header
+  @override
+  void addHeader(String key, dynamic value) {
+    if (_isInitialized) {
+      _dio.options.headers[key] = value;
+      print('[DIO] Header added/updated: $key = $value');
+    }
+  }
+
+  /// Remove a specific header
+  @override
+  void removeHeader(String key) {
+    if (_isInitialized) {
+      _dio.options.headers.remove(key);
+      print('[DIO] Header removed: $key');
+    }
+  }
+
+  /// Get current headers
+  @override
+  Map<String, dynamic> getCurrentHeaders() {
+    return _isInitialized ? Map<String, dynamic>.from(_dio.options.headers) : {};
   }
 
   @override
