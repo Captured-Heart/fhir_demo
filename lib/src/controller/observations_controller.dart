@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,6 +51,61 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
     _observationDateController.clear();
   }
 
+  void populateFormForEdit(Observation observation) {
+    // Populate patient ID
+    if (observation.subject?.reference?.valueString != null) {
+      _patientIdController.text = observation.subject!.reference!.valueString!.split('/').last;
+    }
+
+    // Populate observation date
+    if (observation.effectiveDateTime != null) {
+      _observationDateController.text = observation.effectiveDateTime!.toString().split(' ')[0];
+    }
+
+    // Populate vital signs from components
+    if (observation.component?.isNotEmpty == true) {
+      for (var component in observation.component!) {
+        final code = component.code.coding?.first.code;
+        final value = component.valueQuantity?.value?.valueString ?? '';
+
+        switch (code) {
+          case '8480-6': // Systolic BP
+          case '8462-4': // Diastolic BP
+            if (_bloodPressureController.text.isEmpty) {
+              _bloodPressureController.text = value;
+            } else {
+              _bloodPressureController.text = '${_bloodPressureController.text}/$value';
+            }
+            break;
+          case '8867-4': // Heart rate
+            _heartRateController.text = value;
+            break;
+          case '8310-5': // Body temperature
+            _temperatureController.text = value;
+            break;
+          case '9279-1': // Respiratory rate
+            _respiratoryRateController.text = value;
+            break;
+          case '2708-6': // Oxygen saturation
+            _oxygenSaturationController.text = value;
+            break;
+          case '29463-7': // Body weight
+            _weightController.text = value;
+            break;
+          case '8302-2': // Body height
+            _heightController.text = value;
+            break;
+        }
+      }
+    }
+
+    // Populate notes
+    if (observation.note?.isNotEmpty == true) {
+      _notesController.text = observation.note!.first.text.valueString ?? '';
+    }
+  }
+
+  // -------- GETTERS --------
   // -------- GETTERS --------
   GlobalKey<FormState> get formKey => _formKey;
   TextEditingController get patientIdController => _patientIdController;

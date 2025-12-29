@@ -1,7 +1,10 @@
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/src/controller/patient_controller.dart';
+import 'package:fhir_demo/src/domain/models/medical_forms_data.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/no_records_found.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/results_row_action_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +42,7 @@ class _PatientResultDetailViewState extends ConsumerState<PatientResultDetailVie
   @override
   Widget build(BuildContext context) {
     final patientState = ref.watch(patientController);
+    final patientCtrl = ref.read(patientController.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -57,25 +61,7 @@ class _PatientResultDetailViewState extends ConsumerState<PatientResultDetailVie
           patientState.isLoading
               ? const Center(child: CircularProgressIndicator())
               : patientState.patientList.isEmpty
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: 16,
-                  children: [
-                    Icon(widget.categoryIcon, size: 64, color: AppColors.kGrey.withValues(alpha: 0.5)),
-                    MoodText.text(
-                      text: 'No records found',
-                      context: context,
-                      textStyle: context.textTheme.titleMedium?.copyWith(color: AppColors.kTextGrey),
-                    ),
-                    MoodText.text(
-                      text: 'Submit a form to see results here',
-                      context: context,
-                      textStyle: context.textTheme.bodySmall?.copyWith(color: AppColors.kTextGrey),
-                    ),
-                  ],
-                ),
-              )
+              ? Center(child: NoRecordsFound(icon: widget.categoryIcon))
               : Column(
                 children: [
                   const SizedBox(height: 12),
@@ -83,7 +69,7 @@ class _PatientResultDetailViewState extends ConsumerState<PatientResultDetailVie
 
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: const EdgeInsets.all(4),
                       itemCount: patientState.patientList.length,
                       itemBuilder: (context, index) {
                         final result = patientState.patientList[index];
@@ -94,7 +80,11 @@ class _PatientResultDetailViewState extends ConsumerState<PatientResultDetailVie
                           child: ExpansionTile(
                             leading: CircleAvatar(
                               backgroundColor: widget.categoryColor.withValues(alpha: 0.1),
-                              child: Icon(widget.categoryIcon, color: widget.categoryColor, size: 20),
+                              child: MoodText.text(
+                                text: '${index + 1}',
+                                context: context,
+                                textStyle: context.textTheme.bodyMedium,
+                              ),
                             ),
                             title: MoodText.text(
                               context: context,
@@ -121,21 +111,26 @@ class _PatientResultDetailViewState extends ConsumerState<PatientResultDetailVie
                                     const Divider(height: 24),
 
                                     // Action buttons
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      spacing: 8,
-                                      children: [
-                                        TextButton.icon(
-                                          onPressed: () {},
-                                          icon: const Icon(Icons.visibility),
-                                          label: const Text('View Full'),
-                                        ),
-                                        TextButton.icon(
-                                          onPressed: () {},
-                                          icon: const Icon(Icons.download),
-                                          label: const Text('Export'),
-                                        ),
-                                      ],
+                                    ResultActionsRowButton(
+                                      isDeleteLoading: patientState.isDeleteLoading,
+                                      onDelete: () {
+                                        patientCtrl.deletePatientById(
+                                          result.id!.toString(),
+                                          onSuccess: () {
+                                            if (mounted) {
+                                              context.showSnackBar(message: 'Record deleted successfully');
+                                            }
+                                          },
+                                        );
+                                      },
+                                      onEdit: () {
+                                        // Navigate to edit patient view
+                                        MedicalFormsData.navigateToEditForm(
+                                          context,
+                                          MedicalFormsData.registerPatient.id,
+                                          arguments: result,
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),

@@ -23,7 +23,7 @@ class DottedLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     Paint paint =
         Paint()
-          ..color = context.colorScheme.onSurface.withOpacity(0.7)
+          ..color = context.colorScheme.onSurface.withValues(alpha: 0.7)
           ..strokeCap = StrokeCap.round
           ..strokeWidth = strokeWidthDouble ?? 1.0;
 

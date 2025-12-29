@@ -64,6 +64,14 @@ abstract class DioRepository {
     void Function(int, int)? onSendProgress,
     void Function(int, int)? onReceiveProgress,
   });
+  // sends a DELETE request
+  Future<Response<T>> delete<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  });
 }
 
 class DioRepositoryImpl extends DioRepository {
@@ -368,6 +376,24 @@ class DioRepositoryImpl extends DioRepository {
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,
       onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  @override
+  Future<Response<T>> delete<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    await _ensureInitialized();
+    return await _dio.delete<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
     );
   }
 }

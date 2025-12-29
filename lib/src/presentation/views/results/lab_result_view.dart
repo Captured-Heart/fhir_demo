@@ -1,6 +1,7 @@
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
-import 'package:fhir_demo/src/controller/patient_controller.dart';
+
+import 'package:fhir_demo/src/presentation/widgets/shared/results_row_action_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,7 +26,7 @@ class _LabResultDetailViewState extends ConsumerState<LabResultDetailView> {
   @override
   void initState() {
     super.initState();
-    ref.read(patientController.notifier).fetchPatientsByIdentifier();
+
     // TODO: Fetch results for the specific category if needed
   }
 
@@ -100,26 +101,7 @@ class _LabResultDetailViewState extends ConsumerState<LabResultDetailView> {
                               const Divider(height: 24),
 
                               // Action buttons
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                spacing: 8,
-                                children: [
-                                  TextButton.icon(
-                                    onPressed: () {
-                                      // TODO: Implement view full details
-                                    },
-                                    icon: const Icon(Icons.visibility),
-                                    label: const Text('View Full'),
-                                  ),
-                                  TextButton.icon(
-                                    onPressed: () {
-                                      // TODO: Implement export
-                                    },
-                                    icon: const Icon(Icons.download),
-                                    label: const Text('Export'),
-                                  ),
-                                ],
-                              ),
+                              ResultActionsRowButton(isDeleteLoading: false, onDelete: () {}),
                             ],
                           ),
                         ),

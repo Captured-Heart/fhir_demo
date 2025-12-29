@@ -1,8 +1,7 @@
 import 'package:fhir_demo/src/controller/lab_results_controller.dart';
-import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
-import 'package:fhir_demo/utils/shared_pref_util.dart';
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
@@ -14,30 +13,26 @@ import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 
-class LabResultsView extends ConsumerStatefulWidget {
-  const LabResultsView({super.key});
+class EditLabResultView extends ConsumerStatefulWidget {
+  final DiagnosticReport labResult;
+
+  const EditLabResultView({super.key, required this.labResult});
 
   @override
-  ConsumerState<LabResultsView> createState() => _LabResultsViewState();
+  ConsumerState<EditLabResultView> createState() => _EditLabResultViewState();
 }
 
-class _LabResultsViewState extends ConsumerState<LabResultsView> {
+class _EditLabResultViewState extends ConsumerState<EditLabResultView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => showInstructionDialog(
-        context: context,
-        title: 'Lab Results',
-        subtitle: 'Fill out the form to record new Lab Results in the system. ',
-        sharedKeys: SharedKeys.laboratoryInstructionDontShowAgain,
-      ),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(labResultsController.notifier).populateFormForEdit(widget.labResult);
+    });
   }
 
-  ButtonState _submitState = ButtonState.initial;
-
-  Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
+  Future<void> _selectDate() async {
+    final controller = ref.read(labResultsController.notifier);
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -45,48 +40,26 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      onPicked?.call(picked);
+      controller.testDateController.text =
+          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
     }
-  }
-
-  Future<void> _submitForm() async {
-    final labResultsCtrl = ref.read(labResultsController.notifier);
-    if (labResultsCtrl.formKey.currentState!.validate()) {
-      setState(() => _submitState = ButtonState.loading);
-
-      // TODO: Implement FHIR lab result submission
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() => _submitState = ButtonState.initial);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lab result recorded successfully!'), backgroundColor: Colors.green),
-        );
-        Navigator.pop(context);
-      }
-    }
-  }
-
-  void _clearForm() {
-    ref.read(labResultsController.notifier).clearForm();
   }
 
   @override
   Widget build(BuildContext context) {
-    final labResultsCtrl = ref.watch(labResultsController.notifier);
-    final labResultState = ref.watch(labResultsController);
+    final controller = ref.watch(labResultsController.notifier);
+    final state = ref.watch(labResultsController);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lab Results'),
+        title: const Text('Edit Lab Result'),
         backgroundColor: const Color(0xff00BCD4),
         foregroundColor: AppColors.kWhite,
         actions: [AppBarServerSwitch()],
       ),
       body: SafeArea(
         child: Form(
-          key: labResultsCtrl.formKey,
+          key: controller.formKey,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -94,18 +67,17 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
               spacing: 20,
               children: [
                 SelectedServerText(),
-                // Header
+
                 MoodText.text(
-                  text: 'Laboratory Test Results',
+                  text: 'Edit Laboratory Test Results',
                   context: context,
                   textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
 
-                // Patient ID
                 MoodTextfield(
                   labelText: 'Patient ID *',
                   hintText: 'Enter patient identifier',
-                  controller: labResultsCtrl.patientIdController,
+                  controller: controller.patientIdController,
                   prefixIcon: const Icon(Icons.person),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -115,11 +87,10 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   },
                 ),
 
-                // Test Name
                 MoodTextfield(
                   labelText: 'Test Name *',
                   hintText: 'e.g., Complete Blood Count',
-                  controller: labResultsCtrl.testNameController,
+                  controller: controller.testNameController,
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.science),
                   validator: (value) {
@@ -130,19 +101,18 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   },
                 ),
 
-                // Test Code
                 MoodTextfield(
                   labelText: 'Test Code',
-                  hintText: 'e.g., CBC-001',
-                  controller: labResultsCtrl.testCodeController,
+                  hintText: 'e.g., CBC',
+                  controller: controller.testCodeController,
+                  textCapitalization: TextCapitalization.characters,
                   prefixIcon: const Icon(Icons.qr_code),
                 ),
 
-                // Test Date
                 MoodTextfield(
                   labelText: 'Test Date *',
                   hintText: 'YYYY-MM-DD',
-                  controller: labResultsCtrl.testDateController,
+                  controller: controller.testDateController,
                   readOnly: true,
                   onTap: _selectDate,
                   suffixIcon: const Icon(Icons.calendar_today),
@@ -154,13 +124,11 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   },
                 ),
 
-                // Result Value
                 MoodTextfield(
                   labelText: 'Result Value *',
-                  hintText: 'Enter test result',
-                  controller: labResultsCtrl.resultValueController,
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  prefixIcon: const Icon(Icons.analytics),
+                  hintText: 'Enter test result value',
+                  controller: controller.resultValueController,
+                  prefixIcon: const Icon(Icons.numbers),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter result value';
@@ -169,29 +137,20 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   },
                 ),
 
-                // Unit
                 MoodTextfield(
-                  labelText: 'Unit *',
+                  labelText: 'Unit',
                   hintText: 'e.g., mg/dL, mmol/L',
-                  controller: labResultsCtrl.unitController,
+                  controller: controller.unitController,
                   prefixIcon: const Icon(Icons.straighten),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter unit';
-                    }
-                    return null;
-                  },
                 ),
 
-                // Reference Range
                 MoodTextfield(
                   labelText: 'Reference Range',
-                  hintText: 'e.g., 70-100 mg/dL',
-                  controller: labResultsCtrl.referenceRangeController,
+                  hintText: 'e.g., 4.5-5.5',
+                  controller: controller.referenceRangeController,
                   prefixIcon: const Icon(Icons.compare_arrows),
                 ),
 
-                // Interpretation
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 8,
@@ -209,23 +168,20 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: labResultState.selectedInterpretation,
+                          value: state.selectedInterpretation,
                           hint: const Text('Select interpretation'),
                           isExpanded: true,
                           items:
-                              ['Normal', 'High', 'Low', 'Critical', 'Abnormal'].map((interpretation) {
+                              ['Normal', 'Abnormal', 'High', 'Low', 'Critical'].map((interpretation) {
                                 return DropdownMenuItem(value: interpretation, child: Text(interpretation));
                               }).toList(),
-                          onChanged: (value) {
-                            labResultsCtrl.setSelectedInterpretation(value);
-                          },
+                          onChanged: (value) => controller.setSelectedInterpretation(value),
                         ),
                       ),
                     ),
                   ],
                 ),
 
-                // Status
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 8,
@@ -243,62 +199,65 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: labResultState.selectedStatus,
+                          value: state.selectedStatus,
                           hint: const Text('Select status'),
                           isExpanded: true,
                           items:
                               ['Registered', 'Partial', 'Preliminary', 'Final', 'Amended', 'Corrected', 'Cancelled'].map((status) {
                                 return DropdownMenuItem(value: status, child: Text(status));
                               }).toList(),
-                          onChanged: (value) {
-                            labResultsCtrl.setSelectedStatus(value);
-                          },
+                          onChanged: (value) => controller.setSelectedStatus(value),
                         ),
                       ),
                     ),
                   ],
                 ),
 
-                // Specimen Type
                 MoodTextfield(
                   labelText: 'Specimen Type',
                   hintText: 'e.g., Blood, Urine',
-                  controller: labResultsCtrl.specimenController,
+                  controller: controller.specimenController,
                   textCapitalization: TextCapitalization.words,
-                  prefixIcon: const Icon(Icons.biotech),
+                  prefixIcon: const Icon(Icons.water_drop),
                 ),
 
-                // Performer/Lab
                 MoodTextfield(
-                  labelText: 'Performer/Laboratory',
-                  hintText: 'Enter lab or performer name',
-                  controller: labResultsCtrl.performerController,
+                  labelText: 'Performed By',
+                  hintText: 'Enter lab technician or doctor name',
+                  controller: controller.performerController,
                   textCapitalization: TextCapitalization.words,
-                  prefixIcon: const Icon(Icons.business),
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
 
-                // Clinical Notes
                 MoodTextfield(
                   labelText: 'Clinical Notes',
-                  hintText: 'Enter additional notes',
-                  controller: labResultsCtrl.notesController,
+                  hintText: 'Enter additional observations or comments',
+                  controller: controller.notesController,
                   textCapitalization: TextCapitalization.sentences,
-                  maxLines: 3,
-                  prefixIcon: const Icon(Icons.notes),
+                  maxLines: 4,
+                  prefixIcon: const Icon(Icons.note_alt),
                 ),
 
                 const SizedBox(height: 10),
 
-                // Submit Button
                 MoodPrimaryButton(
-                  title: 'Record Lab Result',
-                  onPressed: _submitForm,
-                  state: _submitState,
+                  title: 'Update Lab Result',
+                  onPressed: () {
+                    if (controller.formKey.currentState!.validate()) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Lab result updated successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                  state: state.isLoading ? ButtonState.loading : ButtonState.initial,
                   bGcolor: const Color(0xff00BCD4),
                 ),
 
-                // Clear Button
-                MoodOutlineButton(title: 'Clear Form', onPressed: _clearForm, color: AppColors.kGrey),
+                MoodOutlineButton(title: 'Reset Form', onPressed: () => controller.clearForm(), color: AppColors.kGrey),
 
                 const SizedBox(height: 20),
               ],

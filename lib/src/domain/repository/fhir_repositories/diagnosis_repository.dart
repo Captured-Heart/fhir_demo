@@ -3,34 +3,39 @@ import 'dart:developer';
 import 'package:fhir_demo/constants/api_constants.dart';
 import 'package:fhir_demo/constants/api_url.dart';
 import 'package:fhir_demo/src/domain/entities/api_response.dart';
-import 'package:fhir_demo/src/domain/entities/project_patient_entity.dart';
+import 'package:fhir_demo/src/domain/entities/project_diagosis_entity.dart';
 import 'package:fhir_demo/src/domain/repository/network/network_calls_repository.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final patientRepositoryProvider = Provider<PatientRepository>((ref) {
+final diagnosisRepositoryProvider = Provider<DiagnosisRepository>((ref) {
   final networkCallsRepository = ref.watch(networkCallsRepositoryProvider);
-  return PatientRepositoryImpl(networkCallsRepository);
+  return DiagnosisRepositoryImpl(networkCallsRepository);
 });
 
-abstract class PatientRepository {
-  Future<ApiResponse> createPatient(ProjectPatientEntity patientData);
-  Future<Map<String, dynamic>?> getPatientById(String patientId);
-  Future<ApiResponse<List<Patient>>> getAllPatientsByIdentifier();
-  Future<ApiResponse> editPatientById({required ProjectPatientEntity patientData, required Patient existingPatient});
-  Future<bool> deletePatientById(String patientId);
-  Future<List<Map<String, dynamic>>> searchPatients();
-  Future<bool> validatePatientExists(String patientId);
+abstract class DiagnosisRepository {
+  Future<ApiResponse> createDiagnosis(ProjectDiagosisEntity diagnosisData);
+  Future<Map<String, dynamic>?> getDiagnosisById(String diagnosisId);
+  Future<ApiResponse<List<DiagnosticReport>>> getAllDiagnosesByIdentifier();
+  Future<ApiResponse> editDiagnosisById({
+    required ProjectDiagosisEntity diagnosisData,
+    required DiagnosticReport existingDiagnosis,
+  });
+  Future<bool> deleteDiagnosisById(String diagnosisId);
+  Future<List<Map<String, dynamic>>> searchDiagnoses();
 }
 
-class PatientRepositoryImpl implements PatientRepository {
+class DiagnosisRepositoryImpl implements DiagnosisRepository {
   final NetworkCallsRepository networkCallsRepository;
-  PatientRepositoryImpl(this.networkCallsRepository);
+  DiagnosisRepositoryImpl(this.networkCallsRepository);
 
   @override
-  Future<ApiResponse> createPatient(ProjectPatientEntity patientData) async {
+  Future<ApiResponse> createDiagnosis(ProjectDiagosisEntity diagnosisData) async {
     try {
-      final response = await networkCallsRepository.post(ApiUrl.fhirPatient.url, data: patientData.addPatient());
+      final response = await networkCallsRepository.post(
+        ApiUrl.fhirDiagnosticReport.url,
+        data: diagnosisData.addDiagnosis(),
+      );
       inspect(response);
       if (response.isSuccess) {
         return ApiResponse.success(response);
@@ -47,9 +52,9 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<bool> deletePatientById(String patientId) async {
+  Future<bool> deleteDiagnosisById(String diagnosisId) async {
     try {
-      final response = await networkCallsRepository.delete('${ApiUrl.fhirPatient.url}/$patientId');
+      final response = await networkCallsRepository.delete('${ApiUrl.fhirDiagnosticReport.url}/$diagnosisId');
       log(response.toString());
       if (response.isSuccess) {
         log('i am success');
@@ -58,20 +63,19 @@ class PatientRepositoryImpl implements PatientRepository {
         return false;
       }
     } catch (e) {
-      log('Error in deletePatientById: $e');
-      return false;
+      rethrow;
     }
   }
 
   @override
-  Future<ApiResponse> editPatientById({
-    required ProjectPatientEntity patientData,
-    required Patient existingPatient,
+  Future<ApiResponse> editDiagnosisById({
+    required ProjectDiagosisEntity diagnosisData,
+    required DiagnosticReport existingDiagnosis,
   }) async {
     try {
       final response = await networkCallsRepository.put(
-        '${ApiUrl.fhirPatient.url}/${existingPatient.id}',
-        data: patientData.addPatient(existingPatient: existingPatient),
+        '${ApiUrl.fhirDiagnosticReport.url}/${existingDiagnosis.id}',
+        data: diagnosisData.addDiagnosis(existingDiagnosis: existingDiagnosis),
       );
       inspect(response);
       if (response.isSuccess) {
@@ -89,51 +93,39 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> getPatientById(String patientId) async {
-    // TODO: implement getPatientById
+  Future<Map<String, dynamic>?> getDiagnosisById(String diagnosisId) async {
+    // TODO: implement getDiagnosisById
     throw UnimplementedError();
   }
 
   @override
-  Future<List<Map<String, dynamic>>> searchPatients() async {
-    // TODO: implement searchPatients
+  Future<List<Map<String, dynamic>>> searchDiagnoses() async {
+    // TODO: implement searchDiagnoses
     throw UnimplementedError();
   }
 
   @override
-  Future<ApiResponse<List<Patient>>> getAllPatientsByIdentifier() async {
+  Future<ApiResponse<List<DiagnosticReport>>> getAllDiagnosesByIdentifier() async {
     try {
       final response = await networkCallsRepository.get(
-        ApiUrl.fhirPatient.url,
+        ApiUrl.fhirDiagnosticReport.url,
         queryParameters: {'identifier': ApiConstants.projectIdentifier},
       );
       inspect(response.data);
       if (response.isSuccess) {
         final data = response.data as Map<String, dynamic>;
         final patients = data['entry'] as List<dynamic>? ?? [];
-        log('Number of patients retrieved: ${patients.length}');
+        log('Number of diagnosis retrieved: ${patients.length}');
         final patientMaps = patients.map((entry) => entry['resource'] as Map<String, dynamic>).toList();
-        final patientData = patientMaps.map((e) => Patient.fromJson(e)).toList();
+        final diagnosisData = patientMaps.map((e) => DiagnosticReport.fromJson(e)).toList();
 
-        return ApiResponse.success(patientData);
+        return ApiResponse.success(diagnosisData);
       } else {
         return ApiResponse.error('Failed to create patient: ${response.statusCode} ${response.errorMessage}');
       }
     } catch (e) {
       log('Error in createPatient: $e');
       return ApiResponse.error(e.toString());
-    }
-  }
-
-  @override
-  Future<bool> validatePatientExists(String patientId) async {
-    try {
-      final response = await networkCallsRepository.get('${ApiUrl.fhirPatient.url}/$patientId');
-      log('[Patient Validation] Checking if Patient/$patientId exists: ${response.isSuccess}');
-      return response.isSuccess;
-    } catch (e) {
-      log('[Patient Validation] Error checking patient existence: $e');
-      return false;
     }
   }
 }

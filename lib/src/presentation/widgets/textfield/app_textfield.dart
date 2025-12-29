@@ -212,7 +212,7 @@ class _MoodTextfieldState extends State<MoodTextfield> {
                       : widget.disabledBorder ??
                           AppSpacings.disabledOutLineBorder.copyWith(borderRadius: widget.borderRadius),
               filled: widget.filled,
-              fillColor: widget.fillColor ?? context.theme.highlightColor.withOpacity(0.15),
+              fillColor: widget.fillColor ?? context.theme.highlightColor.withValues(alpha: 0.15),
             ),
             onChanged: widget.onChanged,
             onFieldSubmitted: widget.onFieldSubmitted,

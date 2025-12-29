@@ -1,10 +1,17 @@
 import 'package:fhir_demo/src/domain/entities/medical_form_entity.dart';
+import 'package:fhir_demo/src/presentation/views/forms/edit_appointment_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/edit_diagnosis_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/edit_lab_result_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/edit_observation_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/edit_patient_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/edit_prescription_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/patient_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/diagnosis_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/prescriptions_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/observation_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/appointment_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/lab_result_view.dart';
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/material.dart';
 
 /// Constants and data for medical forms used in FHIR integration
@@ -95,47 +102,140 @@ enum MedicalFormsData {
     required IconData categoryIcon,
   }) {
     final form = values.firstWhere((form) => form.id == formId, orElse: () => registerPatient);
-
-    Widget resultView;
-    switch (form) {
-      case registerPatient:
-        resultView = PatientResultDetailView(
-          categoryTitle: categoryTitle,
-          categoryColor: categoryColor,
-          categoryIcon: categoryIcon,
-        );
-      case diagnosis:
-        resultView = DiagnosisResultDetailView(
-          categoryTitle: categoryTitle,
-          categoryColor: categoryColor,
-          categoryIcon: categoryIcon,
-        );
-      case prescriptions:
-        resultView = PrescriptionResultDetailView(
-          categoryTitle: categoryTitle,
-          categoryColor: categoryColor,
-          categoryIcon: categoryIcon,
-        );
-      case observations:
-        resultView = ObservationResultDetailView(
-          categoryTitle: categoryTitle,
-          categoryColor: categoryColor,
-          categoryIcon: categoryIcon,
-        );
-      case appointments:
-        resultView = AppointmentResultDetailView(
-          categoryTitle: categoryTitle,
-          categoryColor: categoryColor,
-          categoryIcon: categoryIcon,
-        );
-      case labResults:
-        resultView = LabResultDetailView(
-          categoryTitle: categoryTitle,
-          categoryColor: categoryColor,
-          categoryIcon: categoryIcon,
-        );
+    void navigateToResultView(Widget resultView) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => resultView));
     }
 
-    Navigator.push(context, MaterialPageRoute(builder: (context) => resultView));
+    return switch (form) {
+      registerPatient => () {
+        navigateToResultView(
+          PatientResultDetailView(
+            categoryTitle: categoryTitle,
+            categoryColor: categoryColor,
+            categoryIcon: categoryIcon,
+          ),
+        );
+      }(),
+
+      MedicalFormsData.diagnosis => () {
+        navigateToResultView(
+          DiagnosisResultDetailView(
+            categoryTitle: categoryTitle,
+            categoryColor: categoryColor,
+            categoryIcon: categoryIcon,
+          ),
+        );
+      }(),
+
+      MedicalFormsData.prescriptions => () {
+        navigateToResultView(
+          PrescriptionResultDetailView(
+            categoryTitle: categoryTitle,
+            categoryColor: categoryColor,
+            categoryIcon: categoryIcon,
+          ),
+        );
+      }(),
+
+      MedicalFormsData.observations => () {
+        navigateToResultView(
+          ObservationResultDetailView(
+            categoryTitle: categoryTitle,
+            categoryColor: categoryColor,
+            categoryIcon: categoryIcon,
+          ),
+        );
+      }(),
+
+      MedicalFormsData.appointments => () {
+        navigateToResultView(
+          AppointmentResultDetailView(
+            categoryTitle: categoryTitle,
+            categoryColor: categoryColor,
+            categoryIcon: categoryIcon,
+          ),
+        );
+      }(),
+
+      MedicalFormsData.labResults => () {
+        navigateToResultView(
+          LabResultDetailView(categoryTitle: categoryTitle, categoryColor: categoryColor, categoryIcon: categoryIcon),
+        );
+      }(),
+    };
+    // Widget resultView;
+    // switch (form) {
+    //   case registerPatient:
+    //     resultView = PatientResultDetailView(
+    //       categoryTitle: categoryTitle,
+    //       categoryColor: categoryColor,
+    //       categoryIcon: categoryIcon,
+    //     );
+    //   case diagnosis:
+    //     resultView = DiagnosisResultDetailView(
+    //       categoryTitle: categoryTitle,
+    //       categoryColor: categoryColor,
+    //       categoryIcon: categoryIcon,
+    //     );
+    //   case prescriptions:
+    //     resultView = PrescriptionResultDetailView(
+    //       categoryTitle: categoryTitle,
+    //       categoryColor: categoryColor,
+    //       categoryIcon: categoryIcon,
+    //     );
+    //   case observations:
+    //     resultView = ObservationResultDetailView(
+    //       categoryTitle: categoryTitle,
+    //       categoryColor: categoryColor,
+    //       categoryIcon: categoryIcon,
+    //     );
+    //   case appointments:
+    //     resultView = AppointmentResultDetailView(
+    //       categoryTitle: categoryTitle,
+    //       categoryColor: categoryColor,
+    //       categoryIcon: categoryIcon,
+    //     );
+    //   case labResults:
+    //     resultView = LabResultDetailView(
+    //       categoryTitle: categoryTitle,
+    //       categoryColor: categoryColor,
+    //       categoryIcon: categoryIcon,
+    //     );
+    // }
+
+    // Navigator.push(context, MaterialPageRoute(builder: (context) => resultView));
+  }
+
+  // navigate to edit form view
+  static void navigateToEditForm(BuildContext context, String formId, {required Object? arguments}) {
+    navigateToEditForm(Widget page) {
+      return Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+    }
+
+    final form = values.firstWhere((form) => form.id == formId, orElse: () => registerPatient);
+    return switch (form) {
+      registerPatient => () {
+        navigateToEditForm(EditPatientView(patient: (arguments as Patient)));
+      }(),
+      MedicalFormsData.diagnosis => () {
+        navigateToEditForm(EditDiagnosisView(diagnosis: (arguments as DiagnosticReport)));
+      }(),
+
+      MedicalFormsData.prescriptions => () {
+        navigateToEditForm(EditPrescriptionView(prescription: (arguments as MedicationRequest)));
+      }(),
+
+      MedicalFormsData.observations => () {
+        navigateToEditForm(EditObservationView(observation: (arguments as Observation)));
+      }(),
+
+      MedicalFormsData.appointments => () {
+        navigateToEditForm(EditAppointmentView(appointment: (arguments as Appointment)));
+      }(),
+
+      MedicalFormsData.labResults => () {
+        navigateToEditForm(EditLabResultView(labResult: (arguments as DiagnosticReport)));
+      }(),
+    };
   }
 }

@@ -51,6 +51,15 @@ abstract class NetworkCallsRepository {
     void Function(int, int)? onSendProgress,
     void Function(int, int)? onReceiveProgress,
   });
+
+  // sends a DELETE request
+  Future<ApiResponse<T>> delete<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  });
 }
 
 class NetworkCallsRepositoryImplementation implements NetworkCallsRepository {
@@ -174,6 +183,33 @@ class NetworkCallsRepositoryImplementation implements NetworkCallsRepository {
         }
       },
       operationName: 'PUT $path',
+    );
+  }
+
+  @override
+  Future<ApiResponse<T>> delete<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    return await _connectivityRepository.executeWithConnectivityCheck<T>(
+      networkCall: () async {
+        try {
+          final response = await _dioRepository.delete<T>(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+            cancelToken: cancelToken,
+          );
+          return ApiResponse.success(response.data as T, statusCode: response.statusCode);
+        } catch (e) {
+          return DioExceptionHandler.handleDioException<T>(e);
+        }
+      },
+      operationName: 'DELETE $path',
     );
   }
 }

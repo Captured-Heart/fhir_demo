@@ -1,8 +1,7 @@
 import 'package:fhir_demo/src/controller/prescriptions_controller.dart';
-import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
-import 'package:fhir_demo/utils/shared_pref_util.dart';
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
@@ -14,28 +13,26 @@ import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 
-class PrescriptionsView extends ConsumerStatefulWidget {
-  const PrescriptionsView({super.key});
+class EditPrescriptionView extends ConsumerStatefulWidget {
+  final MedicationRequest prescription;
+
+  const EditPrescriptionView({super.key, required this.prescription});
 
   @override
-  ConsumerState<PrescriptionsView> createState() => _PrescriptionsViewState();
+  ConsumerState<EditPrescriptionView> createState() => _EditPrescriptionViewState();
 }
 
-class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
+class _EditPrescriptionViewState extends ConsumerState<EditPrescriptionView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => showInstructionDialog(
-        context: context,
-        title: 'Prescription',
-        subtitle: 'Fill out the form to record a new prescription in the system. ',
-        sharedKeys: SharedKeys.prescriptionInstructionDontShowAgain,
-      ),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(prescriptionsController.notifier).populateFormForEdit(widget.prescription);
+    });
   }
 
-  Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
+  Future<void> _selectDate() async {
+    final controller = ref.read(prescriptionsController.notifier);
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -43,30 +40,26 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
-      onPicked?.call(picked);
+      controller.startDateController.text =
+          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
     }
-  }
-
-  void _clearForm() {
-    final prescriptionctrl = ref.read(prescriptionsController.notifier);
-    prescriptionctrl.clearForm();
   }
 
   @override
   Widget build(BuildContext context) {
-    final prescriptionctrl = ref.watch(prescriptionsController.notifier);
-    final prescriptionState = ref.watch(prescriptionsController);
+    final controller = ref.watch(prescriptionsController.notifier);
+    final state = ref.watch(prescriptionsController);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Prescriptions'),
+        title: const Text('Edit Prescription'),
         backgroundColor: const Color(0xffFF9800),
         foregroundColor: AppColors.kWhite,
         actions: [AppBarServerSwitch()],
       ),
       body: SafeArea(
         child: Form(
-          key: prescriptionctrl.formKey,
+          key: controller.formKey,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -74,18 +67,17 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
               spacing: 20,
               children: [
                 SelectedServerText(),
-                // Header
+
                 MoodText.text(
-                  text: 'Prescription Details',
+                  text: 'Edit Prescription Details',
                   context: context,
                   textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
 
-                // Patient ID
                 MoodTextfield(
                   labelText: 'Patient ID *',
                   hintText: 'Enter patient identifier',
-                  controller: prescriptionctrl.patientIdController,
+                  controller: controller.patientIdController,
                   prefixIcon: const Icon(Icons.person),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -95,11 +87,10 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   },
                 ),
 
-                // Medication Name
                 MoodTextfield(
                   labelText: 'Medication Name *',
                   hintText: 'Enter medication name',
-                  controller: prescriptionctrl.medicationController,
+                  controller: controller.medicationController,
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.medication),
                   validator: (value) {
@@ -110,11 +101,10 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   },
                 ),
 
-                // Dosage
                 MoodTextfield(
                   labelText: 'Dosage *',
                   hintText: 'e.g., 500mg',
-                  controller: prescriptionctrl.dosageController,
+                  controller: controller.dosageController,
                   prefixIcon: const Icon(Icons.local_pharmacy),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -124,7 +114,6 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   },
                 ),
 
-                // Route
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 8,
@@ -142,7 +131,7 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: prescriptionState.selectedRoute,
+                          value: state.selectedRoute,
                           hint: const Text('Select route'),
                           isExpanded: true,
                           items:
@@ -151,20 +140,17 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                               ) {
                                 return DropdownMenuItem(value: route, child: Text(route));
                               }).toList(),
-                          onChanged: (value) {
-                            prescriptionctrl.setSelectedRoute(value);
-                          },
+                          onChanged: (value) => controller.setSelectedRoute(value),
                         ),
                       ),
                     ),
                   ],
                 ),
 
-                // Frequency
                 MoodTextfield(
                   labelText: 'Frequency *',
                   hintText: 'e.g., Twice daily',
-                  controller: prescriptionctrl.frequencyController,
+                  controller: controller.frequencyController,
                   textCapitalization: TextCapitalization.sentences,
                   prefixIcon: const Icon(Icons.schedule),
                   validator: (value) {
@@ -175,11 +161,10 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   },
                 ),
 
-                // Duration
                 MoodTextfield(
                   labelText: 'Duration *',
                   hintText: 'e.g., 7 days',
-                  controller: prescriptionctrl.durationController,
+                  controller: controller.durationController,
                   prefixIcon: const Icon(Icons.timer),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -189,11 +174,10 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   },
                 ),
 
-                // Start Date
                 MoodTextfield(
                   labelText: 'Start Date *',
                   hintText: 'YYYY-MM-DD',
-                  controller: prescriptionctrl.startDateController,
+                  controller: controller.startDateController,
                   readOnly: true,
                   onTap: _selectDate,
                   suffixIcon: const Icon(Icons.calendar_today),
@@ -205,11 +189,10 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   },
                 ),
 
-                // Prescribing Doctor
                 MoodTextfield(
                   labelText: 'Prescribing Doctor *',
                   hintText: 'Enter doctor name',
-                  controller: prescriptionctrl.prescribingDoctorController,
+                  controller: controller.prescribingDoctorController,
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.local_hospital),
                   validator: (value) {
@@ -220,11 +203,10 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   },
                 ),
 
-                // Special Instructions
                 MoodTextfield(
                   labelText: 'Special Instructions',
                   hintText: 'Enter special instructions for patient',
-                  controller: prescriptionctrl.instructionsController,
+                  controller: controller.instructionsController,
                   textCapitalization: TextCapitalization.sentences,
                   maxLines: 3,
                   prefixIcon: const Icon(Icons.info_outline),
@@ -232,16 +214,24 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
 
                 const SizedBox(height: 10),
 
-                // Submit Button
                 MoodPrimaryButton(
-                  title: 'Create Prescription',
-                  onPressed: () {},
-                  state: prescriptionState.isLoading ? ButtonState.loading : ButtonState.loaded,
+                  title: 'Update Prescription',
+                  onPressed: () {
+                    if (controller.formKey.currentState!.validate()) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Prescription updated successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                  state: state.isLoading ? ButtonState.loading : ButtonState.initial,
                   bGcolor: const Color(0xffFF9800),
                 ),
 
-                // Clear Button
-                MoodOutlineButton(title: 'Clear Form', onPressed: _clearForm, color: AppColors.kGrey),
+                MoodOutlineButton(title: 'Reset Form', onPressed: () => controller.clearForm(), color: AppColors.kGrey),
 
                 const SizedBox(height: 20),
               ],

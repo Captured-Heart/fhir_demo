@@ -1,9 +1,8 @@
 import 'package:fhir_demo/src/controller/patient_controller.dart';
-import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
-import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:fhir_demo/utils/validations.dart';
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
@@ -15,25 +14,22 @@ import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 
-class RegisterPatientView extends ConsumerStatefulWidget {
-  const RegisterPatientView({super.key});
+class EditPatientView extends ConsumerStatefulWidget {
+  final Patient patient;
+
+  const EditPatientView({super.key, required this.patient});
 
   @override
-  ConsumerState<RegisterPatientView> createState() => _RegisterPatientViewState();
+  ConsumerState<EditPatientView> createState() => _EditPatientViewState();
 }
 
-class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
+class _EditPatientViewState extends ConsumerState<EditPatientView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => showInstructionDialog(
-        context: context,
-        title: 'Register Patient',
-        subtitle: 'Fill out the form to register a new patient in the system. ',
-        sharedKeys: SharedKeys.patientInstructionDontShowAgain,
-      ),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(patientController.notifier).populateFormForEdit(widget.patient);
+    });
   }
 
   Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
@@ -56,7 +52,7 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register Patient'),
+        title: const Text('Edit Patient'),
         backgroundColor: const Color(0xff4CAF50),
         foregroundColor: AppColors.kWhite,
         actions: [AppBarServerSwitch()],
@@ -64,7 +60,6 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
       body: SafeArea(
         child: Form(
           key: patientCtrl.patientFormKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -72,9 +67,10 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
               spacing: 20,
               children: [
                 SelectedServerText(),
+
                 // Header
                 MoodText.text(
-                  text: 'Patient Information',
+                  text: 'Edit Patient Information',
                   context: context,
                   textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
@@ -84,9 +80,14 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   labelText: 'First Name *',
                   hintText: 'Enter first name',
                   controller: patientCtrl.firstNameController,
-                  keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
-                  validator: (value) => AppValidations.validatedName(value),
+                  prefixIcon: const Icon(Icons.person),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter first name';
+                    }
+                    return null;
+                  },
                 ),
 
                 // Last Name
@@ -94,9 +95,14 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   labelText: 'Last Name *',
                   hintText: 'Enter last name',
                   controller: patientCtrl.lastNameController,
-                  keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
-                  validator: (value) => AppValidations.validatedName(value),
+                  prefixIcon: const Icon(Icons.person_outline),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter last name';
+                    }
+                    return null;
+                  },
                 ),
 
                 // Date of Birth
@@ -107,8 +113,11 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   readOnly: true,
                   onTap:
                       () => _selectDate(
-                        onPicked: (selectedDate) {
-                          patientCtrl.formatBirthDate(selectedDate!);
+                        onPicked: (date) {
+                          if (date != null) {
+                            patientCtrl.dateOfBirthController.text =
+                                '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                          }
                         },
                       ),
                   suffixIcon: const Icon(Icons.calendar_today),
@@ -145,9 +154,7 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                               ['Male', 'Female'].map((gender) {
                                 return DropdownMenuItem(value: gender, child: Text(gender));
                               }).toList(),
-                          onChanged: (value) {
-                            patientCtrl.updateGender(value);
-                          },
+                          onChanged: (value) => patientCtrl.updateGender(value),
                         ),
                       ),
                     ),
@@ -161,7 +168,12 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   controller: patientCtrl.phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: const Icon(Icons.phone),
-                  validator: (value) => AppValidations.validatePhone(value),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter phone number';
+                    }
+                    return null;
+                  },
                 ),
 
                 // Email
@@ -171,19 +183,45 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   controller: patientCtrl.emailController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: const Icon(Icons.email),
+                  validator: (v) => AppValidations.validatedEmail(v),
                 ),
 
                 // Address
                 MoodTextfield(
-                  labelText: 'Address',
-                  hintText: 'Enter full address',
-                  controller: patientCtrl.addressController,
-                  keyboardType: TextInputType.streetAddress,
-                  textCapitalization: TextCapitalization.words,
-                  maxLines: 3,
+                  labelText: 'Street Address',
+                  hintText: 'Enter street address',
                   inputFormatters: [],
+
+                  controller: patientCtrl.addressController,
+                  textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.home),
                 ),
+
+                // City
+                // MoodTextfield(
+                //   labelText: 'City',
+                //   hintText: 'Enter city',
+                //   controller: patientCtrl.cityController,
+                //   textCapitalization: TextCapitalization.words,
+                //   prefixIcon: const Icon(Icons.location_city),
+                // ),
+
+                // // State
+                // MoodTextfield(
+                //   labelText: 'State/Province',
+                //   hintText: 'Enter state or province',
+                //   controller: patientCtrl.stateController,
+                //   textCapitalization: TextCapitalization.words,
+                //   prefixIcon: const Icon(Icons.map),
+                // ),
+
+                // // Postal Code
+                // MoodTextfield(
+                //   labelText: 'Postal Code',
+                //   hintText: 'Enter postal code',
+                //   controller: patientCtrl.postalCodeController,
+                //   prefixIcon: const Icon(Icons.pin_drop),
+                // ),
 
                 // Emergency Contact
                 MoodTextfield(
@@ -193,31 +231,36 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   keyboardType: TextInputType.phone,
                   prefixIcon: const Icon(Icons.emergency),
                 ),
-
                 const SizedBox(height: 10),
 
-                // Submit Button
+                // Update Button
                 MoodPrimaryButton(
-                  title: 'Register Patient',
-                  onPressed:
-                      () => patientCtrl.submitForm(
-                        onGenderValidationFailed: () {
-                          context.showSnackBar(message: 'Please select a gender', isError: true);
-                        },
-                        onSuccess: () {
-                          context.showSnackBar(message: 'Patient registered successfully');
-                          Navigator.pop(context);
-                        },
-                        onError: () {
-                          context.showSnackBar(message: 'Failed to register patient', isError: true);
-                        },
-                      ),
-                  state: patientState.isLoading ? ButtonState.loading : ButtonState.loaded,
+                  title: 'Update Patient',
+                  onPressed: () {
+                    patientCtrl.editPatientForm(
+                      existingPatient: widget.patient,
+                      onGenderValidationFailed: () {
+                        context.showSnackBar(message: 'Please select a gender', isError: true);
+                      },
+                      onSuccess: () {
+                        context.showSnackBar(message: 'Patient updated successfully');
+                        Navigator.pop(context);
+                      },
+                      onError: () {
+                        context.showSnackBar(message: 'Failed to update patient', isError: true);
+                      },
+                    );
+                  },
+                  state: patientState.isLoading ? ButtonState.loading : ButtonState.initial,
                   bGcolor: const Color(0xff4CAF50),
                 ),
 
                 // Clear Button
-                MoodOutlineButton(title: 'Clear Form', onPressed: patientCtrl.clearForm, color: AppColors.kGrey),
+                MoodOutlineButton(
+                  title: 'Reset Form',
+                  onPressed: () => patientCtrl.clearForm(),
+                  color: AppColors.kGrey,
+                ),
 
                 const SizedBox(height: 20),
               ],

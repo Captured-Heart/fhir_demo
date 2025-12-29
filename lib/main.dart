@@ -6,7 +6,6 @@ import 'package:fhir_demo/constants/nav_routes.dart';
 import 'package:fhir_demo/constants/text_constants.dart';
 import 'package:fhir_demo/hive_helper/cache_helper.dart';
 import 'package:fhir_demo/src/controller/theme_controller.dart';
-import 'package:fhir_demo/src/presentation/views/api_demo_view.dart';
 import 'package:fhir_demo/src/presentation/views/auth_view.dart';
 import 'package:fhir_demo/src/presentation/views/bottom_nav_view.dart';
 import 'package:fhir_demo/src/presentation/views/splash_view.dart';
@@ -21,7 +20,7 @@ import 'package:fhir_demo/src/presentation/widgets/themes/app_themes.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
-  await SharedPrefsUtil.init(); 
+  await SharedPrefsUtil.init();
 
   await CacheHelper.openHiveBoxes();
   runApp(
@@ -66,7 +65,6 @@ class MainApp extends ConsumerWidget {
               NavRoutes.splashRoute => SplashView(),
               NavRoutes.homeRoute => BottomNavView(),
               NavRoutes.authRoute => AuthView(),
-              NavRoutes.apiDemoRoute => ApiDemoView(),
               NavRoutes.registerPatientRoute => RegisterPatientView(),
               NavRoutes.diagnosisRoute => DiagnosisView(),
               NavRoutes.prescriptionsRoute => PrescriptionsView(),

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:fhir_demo/constants/api_constants.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
@@ -42,7 +41,7 @@ class ProjectPatientEntity {
     };
   }
 
-  MapStringDynamic addPatient() {
+  MapStringDynamic addPatient({Patient? existingPatient}) {
     final body = Patient(
       id: FhirString(id),
       active: FhirBoolean(true),
@@ -52,18 +51,25 @@ class ProjectPatientEntity {
       identifier: [Identifier(value: ApiConstants.projectIdentifier.toFhirString)],
       birthDate: dateOfBirth.toFhirDate,
       gender: gender != null ? AdministrativeGender(gender?.toLowerCase()) : null,
-      telecom:
-          email != null
-              ? [
-                ContactPoint(system: ContactPointSystem.email, value: email?.toFhirString),
-                ContactPoint(system: ContactPointSystem.phone, value: phoneNumber.toFhirString),
-                ContactPoint(system: ContactPointSystem.phone, value: emergencyContactNo?.toFhirString),
-              ]
-              : null,
+      telecom: [
+        ContactPoint(system: ContactPointSystem.email, value: email?.toFhirString),
+        ContactPoint(system: ContactPointSystem.phone, value: phoneNumber.toFhirString),
+        ContactPoint(system: ContactPointSystem.other, value: emergencyContactNo?.toFhirString),
+      ],
       address: address != null ? [Address(text: address?.toFhirString)] : null,
     );
 
-    log('this is the body ${body.toJson()}');
+    if (existingPatient != null) {
+      final updatedPatient = existingPatient.copyWith(
+        name: body.name,
+        birthDate: body.birthDate,
+        gender: body.gender,
+        telecom: body.telecom,
+        address: body.address,
+        active: body.active,
+      );
+      return updatedPatient.toJson();
+    }
 
     return body.toJson();
   }
