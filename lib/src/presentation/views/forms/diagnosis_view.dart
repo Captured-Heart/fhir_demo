@@ -1,7 +1,9 @@
 import 'package:fhir_demo/src/controller/diagnosis_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/src/presentation/widgets/textfield/app_drop_down.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:fhir_demo/constants/diagnostic_status_constants.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/button_state.dart';
 import 'package:fhir_demo/constants/extension.dart';
-import 'package:fhir_demo/constants/spacings.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/primary_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
@@ -52,6 +53,7 @@ class _DiagnosisViewState extends ConsumerState<DiagnosisView> {
   Widget build(BuildContext context) {
     final diagnosisCtrl = ref.read(diagnosisController.notifier);
     final diagnosisState = ref.watch(diagnosisController);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Medical Diagnosis'),
@@ -76,19 +78,7 @@ class _DiagnosisViewState extends ConsumerState<DiagnosisView> {
                   textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
 
-                // Patient ID
-                MoodTextfield(
-                  labelText: 'Patient ID *',
-                  hintText: 'Enter patient identifier',
-                  controller: diagnosisCtrl.patientIdController,
-                  prefixIcon: const Icon(Icons.person),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter patient ID';
-                    }
-                    return null;
-                  },
-                ),
+                PatientIdDropdown(onChanged: (selectedId) => diagnosisCtrl.updatePatientId(selectedId)),
 
                 // Condition/Diagnosis
                 MoodTextfield(
@@ -107,68 +97,21 @@ class _DiagnosisViewState extends ConsumerState<DiagnosisView> {
                 ),
 
                 // Severity
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    MoodText.text(
-                      text: 'Severity *',
-                      context: context,
-                      textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                        borderRadius: AppSpacings.borderRadiusk20All,
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: diagnosisState.selectedSeverity,
-                          hint: const Text('Select severity'),
-                          isExpanded: true,
-                          items:
-                              ['Mild', 'Moderate', 'Severe'].map((severity) {
-                                return DropdownMenuItem(value: severity, child: Text(severity));
-                              }).toList(),
-                          onChanged: (value) => diagnosisCtrl.setSelectedSeverity(value),
-                        ),
-                      ),
-                    ),
-                  ],
+                AppDropDownWidget(
+                  value: diagnosisState.selectedSeverity,
+                  labelText: 'Severity *',
+                  items: ['Mild', 'Moderate', 'Severe'],
+                  onChanged: (value) => diagnosisCtrl.setSelectedSeverity(value as String?),
                 ),
 
-                // Clinical Status
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    MoodText.text(
-                      text: 'Clinical Status *',
-                      context: context,
-                      textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                        borderRadius: AppSpacings.borderRadiusk20All,
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: diagnosisState.selectedStatus,
-                          hint: const Text('Select status'),
-                          isExpanded: true,
-                          items:
-                              DiagnosticStatusConstants.diagnosticReportStatuses.map((status) {
-                                return DropdownMenuItem(value: status, child: Text(status));
-                              }).toList(),
-                          onChanged: (value) => diagnosisCtrl.setSelectedStatus(value),
-                        ),
-                      ),
-                    ),
-                  ],
+                //clinical Status
+                AppDropDownWidget(
+                  value: diagnosisState.selectedStatus,
+                  labelText: 'Clinical Status *',
+                  items: DiagnosticStatusConstants.diagnosticReportStatuses,
+                  onChanged: (value) => diagnosisCtrl.setSelectedStatus(value as String?),
                 ),
+                // Clinical Status
 
                 // Onset Date
                 MoodTextfield(

@@ -53,7 +53,7 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
   Widget build(BuildContext context) {
     final patientCtrl = ref.read(patientController.notifier);
     final patientState = ref.watch(patientController);
-
+    //
     return Scaffold(
       appBar: AppBar(
         title: const Text('Register Patient'),
@@ -200,18 +200,20 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                 MoodPrimaryButton(
                   title: 'Register Patient',
                   onPressed:
-                      () => patientCtrl.submitForm(
-                        onGenderValidationFailed: () {
-                          context.showSnackBar(message: 'Please select a gender', isError: true);
-                        },
-                        onSuccess: () {
-                          context.showSnackBar(message: 'Patient registered successfully');
-                          Navigator.pop(context);
-                        },
-                        onError: () {
-                          context.showSnackBar(message: 'Failed to register patient', isError: true);
-                        },
-                      ),
+                      patientState.isLoading
+                          ? null
+                          : () => patientCtrl.submitForm(
+                            onGenderValidationFailed: () {
+                              context.showSnackBar(message: 'Please select a gender', isError: true);
+                            },
+                            onSuccess: () {
+                              context.showSnackBar(message: 'Patient registered successfully');
+                              Navigator.pop(context);
+                            },
+                            onError: () {
+                              context.showSnackBar(message: 'Failed to register patient', isError: true);
+                            },
+                          ),
                   state: patientState.isLoading ? ButtonState.loading : ButtonState.loaded,
                   bGcolor: const Color(0xff4CAF50),
                 ),

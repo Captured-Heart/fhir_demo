@@ -33,7 +33,8 @@ class PatientRepositoryImpl implements PatientRepository {
       final response = await networkCallsRepository.post(ApiUrl.fhirPatient.url, data: patientData.addPatient());
       inspect(response);
       if (response.isSuccess) {
-        return ApiResponse.success(response);
+        final data = Patient.fromJson(response.data as Map<String, dynamic>);
+        return ApiResponse.success(data);
       } else {
         return ApiResponse.error(
           'Failed to create patient: ${response.statusCode} ${response.errorMessage}',

@@ -8,26 +8,17 @@ final appointmentsController = NotifierProvider.autoDispose<AppointmentsNotifier
 );
 
 class AppointmentsNotifier extends AutoDisposeNotifier<AppointmentsNotifierState> {
-  late GlobalKey<FormState> _formKey;
-  late TextEditingController _patientIdController;
-  late TextEditingController _doctorController;
-  late TextEditingController _appointmentDateController;
-  late TextEditingController _appointmentTimeController;
-  late TextEditingController _reasonController;
-  late TextEditingController _locationController;
-  late TextEditingController _notesController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _patientIdController = TextEditingController();
+  final TextEditingController _doctorController = TextEditingController();
+  final TextEditingController _appointmentDateController = TextEditingController();
+  final TextEditingController _appointmentTimeController = TextEditingController();
+  final TextEditingController _reasonController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
 
   @override
   build() {
-    _formKey = GlobalKey<FormState>();
-    _patientIdController = TextEditingController();
-    _doctorController = TextEditingController();
-    _appointmentDateController = TextEditingController();
-    _appointmentTimeController = TextEditingController();
-    _reasonController = TextEditingController();
-    _locationController = TextEditingController();
-    _notesController = TextEditingController();
-
     return AppointmentsNotifierState();
   }
 

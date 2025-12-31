@@ -12,15 +12,16 @@ final fhirSettingsProvider = NotifierProvider.autoDispose<FhirSettingsNotifier, 
 
 /// State notifier for managing FHIR settings
 class FhirSettingsNotifier extends AutoDisposeNotifier<FhirSettingsEntity> {
-  late TextEditingController _serverUrlController;
-  late TextEditingController _apiKeyController;
+  final TextEditingController _serverUrlController = TextEditingController();
+  final TextEditingController _apiKeyController = TextEditingController();
 
   @override
   FhirSettingsEntity build() {
-    _serverUrlController = TextEditingController();
-    _apiKeyController = TextEditingController();
+    final defaultState = FhirSettingsEntity(serverBaseUrl: FhirServerType.hapi.baseUrl);
+    // Load saved settings asynchronously
     _loadSettings();
-    return state;
+
+    return defaultState;
   }
 
   // ------ GETTERS ------

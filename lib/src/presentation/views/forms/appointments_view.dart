@@ -127,6 +127,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                   labelText: 'Doctor/Practitioner *',
                   hintText: 'Enter doctor name',
                   controller: appointmentCtrl.doctorController,
+                  inputFormatters: [],
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.local_hospital),
                   validator: (value) {

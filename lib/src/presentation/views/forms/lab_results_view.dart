@@ -247,7 +247,15 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                           hint: const Text('Select status'),
                           isExpanded: true,
                           items:
-                              ['Registered', 'Partial', 'Preliminary', 'Final', 'Amended', 'Corrected', 'Cancelled'].map((status) {
+                              [
+                                'Registered',
+                                'Partial',
+                                'Preliminary',
+                                'Final',
+                                'Amended',
+                                'Corrected',
+                                'Cancelled',
+                              ].map((status) {
                                 return DropdownMenuItem(value: status, child: Text(status));
                               }).toList(),
                           onChanged: (value) {

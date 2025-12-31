@@ -81,7 +81,6 @@ class _EditDiagnosisViewState extends ConsumerState<EditDiagnosisView> {
                 MoodTextfield(
                   labelText: 'Patient ID *',
                   hintText: 'Enter patient identifier',
-                  controller: diagnosisCtrl.patientIdController,
                   prefixIcon: const Icon(Icons.person),
                   validator: (value) {
                     if (value == null || value.isEmpty) {

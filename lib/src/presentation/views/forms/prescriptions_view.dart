@@ -1,14 +1,16 @@
 import 'package:fhir_demo/src/controller/prescriptions_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/src/presentation/widgets/textfield/app_drop_down.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
+import 'package:fhir_demo/utils/validations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/button_state.dart';
 import 'package:fhir_demo/constants/extension.dart';
-import 'package:fhir_demo/constants/spacings.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/primary_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
@@ -81,17 +83,9 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
 
-                // Patient ID
-                MoodTextfield(
-                  labelText: 'Patient ID *',
-                  hintText: 'Enter patient identifier',
-                  controller: prescriptionctrl.patientIdController,
-                  prefixIcon: const Icon(Icons.person),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter patient ID';
-                    }
-                    return null;
+                PatientIdDropdown(
+                  onChanged: (patientId) {
+                    prescriptionctrl.updatePatientId(patientId);
                   },
                 ),
 
@@ -101,6 +95,7 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   hintText: 'Enter medication name',
                   controller: prescriptionctrl.medicationController,
                   textCapitalization: TextCapitalization.words,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.medication),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -115,77 +110,47 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   labelText: 'Dosage *',
                   hintText: 'e.g., 500mg',
                   controller: prescriptionctrl.dosageController,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.local_pharmacy),
+                  keyboardType: TextInputType.number,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter dosage';
-                    }
-                    return null;
+                    return AppValidations.validateNumberOnly(value, fieldName: 'Dosage');
                   },
                 ),
 
                 // Route
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    MoodText.text(
-                      text: 'Route of Administration *',
-                      context: context,
-                      textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                        borderRadius: AppSpacings.borderRadiusk20All,
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: prescriptionState.selectedRoute,
-                          hint: const Text('Select route'),
-                          isExpanded: true,
-                          items:
-                              ['Oral', 'Intravenous', 'Intramuscular', 'Subcutaneous', 'Topical', 'Inhalation'].map((
-                                route,
-                              ) {
-                                return DropdownMenuItem(value: route, child: Text(route));
-                              }).toList(),
-                          onChanged: (value) {
-                            prescriptionctrl.setSelectedRoute(value);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                AppDropDownWidget(
+                  value: prescriptionState.selectedRoute,
+                  labelText: 'Route of Administration *',
+                  items: ['Oral', 'Intravenous', 'Intramuscular', 'Subcutaneous', 'Topical', 'Inhalation'],
+                  onChanged: (value) {
+                    prescriptionctrl.setSelectedRoute(value as String?);
+                  },
                 ),
 
                 // Frequency
                 MoodTextfield(
                   labelText: 'Frequency *',
-                  hintText: 'e.g., Twice daily',
+                  hintText: 'e.g: 2 - (The unit is daily, and auto added)',
                   controller: prescriptionctrl.frequencyController,
                   textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.number,
                   prefixIcon: const Icon(Icons.schedule),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter frequency';
-                    }
-                    return null;
+                    return AppValidations.validateNumberOnly(value, fieldName: 'Frequency');
                   },
                 ),
 
                 // Duration
                 MoodTextfield(
                   labelText: 'Duration *',
-                  hintText: 'e.g., 7 days',
+                  hintText: 'e.g., 7 (Unit is in days)',
                   controller: prescriptionctrl.durationController,
                   prefixIcon: const Icon(Icons.timer),
+                  inputFormatters: [],
+                  keyboardType: TextInputType.number,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter duration';
-                    }
-                    return null;
+                    return AppValidations.validateNumberOnly(value, fieldName: 'Duration');
                   },
                 ),
 
@@ -195,7 +160,12 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   hintText: 'YYYY-MM-DD',
                   controller: prescriptionctrl.startDateController,
                   readOnly: true,
-                  onTap: _selectDate,
+                  onTap:
+                      () => _selectDate(
+                        onPicked: (value) {
+                          prescriptionctrl.formatStartDate(value!);
+                        },
+                      ),
                   suffixIcon: const Icon(Icons.calendar_today),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -211,6 +181,7 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   hintText: 'Enter doctor name',
                   controller: prescriptionctrl.prescribingDoctorController,
                   textCapitalization: TextCapitalization.words,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.local_hospital),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -226,6 +197,7 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                   hintText: 'Enter special instructions for patient',
                   controller: prescriptionctrl.instructionsController,
                   textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: [],
                   maxLines: 3,
                   prefixIcon: const Icon(Icons.info_outline),
                 ),
@@ -235,7 +207,23 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
                 // Submit Button
                 MoodPrimaryButton(
                   title: 'Create Prescription',
-                  onPressed: () {},
+                  onPressed:
+                      prescriptionState.isLoading
+                          ? null
+                          : () {
+                            prescriptionctrl.submitForm(
+                              onRouteofAdminFailed: () {
+                                context.showSnackBar(message: 'Please select a route of administration', isError: true);
+                              },
+                              onSuccess: () {
+                                context.showSnackBar(message: 'Prescription registered successfully');
+                                Navigator.pop(context);
+                              },
+                              onError: () {
+                                context.showSnackBar(message: 'Failed to register prescription', isError: true);
+                              },
+                            );
+                          },
                   state: prescriptionState.isLoading ? ButtonState.loading : ButtonState.loaded,
                   bGcolor: const Color(0xffFF9800),
                 ),

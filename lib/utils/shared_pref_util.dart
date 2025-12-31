@@ -10,6 +10,7 @@ enum SharedKeys {
   prescriptionInstructionDontShowAgain,
   appointmentInstructionDontShowAgain,
   laboratoryInstructionDontShowAgain,
+  diagnosisPatientId,
 }
 
 class SharedPrefsUtil {

@@ -8,32 +8,20 @@ final labResultsController = NotifierProvider.autoDispose<LabResultsNotifier, La
 );
 
 class LabResultsNotifier extends AutoDisposeNotifier<LabResultsNotifierState> {
-  late GlobalKey<FormState> _formKey;
-  late TextEditingController _patientIdController;
-  late TextEditingController _testNameController;
-  late TextEditingController _testCodeController;
-  late TextEditingController _testDateController;
-  late TextEditingController _resultValueController;
-  late TextEditingController _unitController;
-  late TextEditingController _referenceRangeController;
-  late TextEditingController _specimenController;
-  late TextEditingController _performerController;
-  late TextEditingController _notesController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _patientIdController = TextEditingController();
+  final TextEditingController _testNameController = TextEditingController();
+  final TextEditingController _testCodeController = TextEditingController();
+  final TextEditingController _testDateController = TextEditingController();
+  final TextEditingController _resultValueController = TextEditingController();
+  final TextEditingController _unitController = TextEditingController();
+  final TextEditingController _referenceRangeController = TextEditingController();
+  final TextEditingController _specimenController = TextEditingController();
+  final TextEditingController _performerController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
 
   @override
   build() {
-    _formKey = GlobalKey<FormState>();
-    _patientIdController = TextEditingController();
-    _testNameController = TextEditingController();
-    _testCodeController = TextEditingController();
-    _testDateController = TextEditingController();
-    _resultValueController = TextEditingController();
-    _unitController = TextEditingController();
-    _referenceRangeController = TextEditingController();
-    _specimenController = TextEditingController();
-    _performerController = TextEditingController();
-    _notesController = TextEditingController();
-
     return LabResultsNotifierState();
   }
 

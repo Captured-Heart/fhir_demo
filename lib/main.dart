@@ -1,3 +1,4 @@
+import 'package:fhir_demo/src/controller/patient_controller.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -23,8 +24,12 @@ void main() async {
   await SharedPrefsUtil.init();
 
   await CacheHelper.openHiveBoxes();
+  final container = ProviderContainer();
+  container.read(themeProvider.notifier).loadCurrentThemeMode();
+  container.read(patientController.notifier);
   runApp(
-    ProviderScope(
+    UncontrolledProviderScope(
+      container: container,
       child: EasyLocalization(
         supportedLocales: const [Locale('en', 'US'), Locale('de', 'DE')],
         saveLocale: true,

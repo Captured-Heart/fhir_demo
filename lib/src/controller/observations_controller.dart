@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:fhir_demo/src/domain/entities/project_observation_entity.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,32 +9,20 @@ final observationsController = NotifierProvider.autoDispose<ObservationsNotifier
 );
 
 class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState> {
-  late GlobalKey<FormState> _formKey;
-  late TextEditingController _patientIdController;
-  late TextEditingController _bloodPressureController;
-  late TextEditingController _heartRateController;
-  late TextEditingController _temperatureController;
-  late TextEditingController _respiratoryRateController;
-  late TextEditingController _oxygenSaturationController;
-  late TextEditingController _weightController;
-  late TextEditingController _heightController;
-  late TextEditingController _notesController;
-  late TextEditingController _observationDateController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _patientIdController = TextEditingController();
+  final TextEditingController _bloodPressureController = TextEditingController();
+  final TextEditingController _heartRateController = TextEditingController();
+  final TextEditingController _temperatureController = TextEditingController();
+  final TextEditingController _respiratoryRateController = TextEditingController();
+  final TextEditingController _oxygenSaturationController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _observationDateController = TextEditingController();
 
   @override
   build() {
-    _formKey = GlobalKey<FormState>();
-    _patientIdController = TextEditingController();
-    _bloodPressureController = TextEditingController();
-    _heartRateController = TextEditingController();
-    _temperatureController = TextEditingController();
-    _respiratoryRateController = TextEditingController();
-    _oxygenSaturationController = TextEditingController();
-    _weightController = TextEditingController();
-    _heightController = TextEditingController();
-    _notesController = TextEditingController();
-    _observationDateController = TextEditingController();
-
     return ObservationsNotifierState();
   }
 
@@ -65,7 +54,7 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
     // Populate vital signs from components
     if (observation.component?.isNotEmpty == true) {
       for (var component in observation.component!) {
-        final code = component.code.coding?.first.code;
+        final code = FhirCodeProjectEnum.fromCode(component.code.coding?.first.code?.valueString ?? '');
         final value = component.valueQuantity?.value?.valueString ?? '';
 
         switch (code) {
@@ -95,6 +84,33 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
           case '8302-2': // Body height
             _heightController.text = value;
             break;
+          case FhirCodeProjectEnum.vitalSignsPanel:
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case FhirCodeProjectEnum.systolicBloodPressure:
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case FhirCodeProjectEnum.diastolicBloodPressure:
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case FhirCodeProjectEnum.heartRate:
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case FhirCodeProjectEnum.bodyTemperature:
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case FhirCodeProjectEnum.respiratoryRate:
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case FhirCodeProjectEnum.oxygenSaturation:
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case FhirCodeProjectEnum.bodyWeight:
+            // TODO: Handle this case.
+            throw UnimplementedError();
+          case FhirCodeProjectEnum.bodyHeight:
+            // TODO: Handle this case.
+            throw UnimplementedError();
         }
       }
     }

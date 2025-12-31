@@ -2,15 +2,18 @@ import 'dart:developer';
 
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_demo/hive_helper/cache_helper.dart';
+import 'package:fhir_demo/src/controller/fhir_settings_controller.dart';
+import 'package:fhir_demo/src/domain/entities/patient_server_id_entity.dart';
 import 'package:fhir_demo/src/domain/entities/project_patient_entity.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/patient_repository.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final patientController = NotifierProvider.autoDispose<PatientNotifier, PatientNotifierState>(PatientNotifier.new);
+final patientController = NotifierProvider.autoDispose<PatientNotifier, PatientNotifierState>(() => PatientNotifier());
 
 class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
+  late GlobalKey<FormState> _patientFormKey;
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _dateOfBirthController;
@@ -19,21 +22,22 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
   late TextEditingController _emailController;
   late TextEditingController _addressController;
   late TextEditingController _emergencyContactController;
-  late GlobalKey<FormState> _patientFormKey;
   late PatientRepository _patientRepository;
   @override
   build() {
     final user = CacheHelper.currentUser;
     _firstNameController = TextEditingController(text: user?.name.split(' ').first ?? '');
     _lastNameController = TextEditingController(text: user?.name.split(' ').last ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _patientFormKey = GlobalKey<FormState>();
     _dateOfBirthController = TextEditingController();
     _genderController = TextEditingController();
     _phoneController = TextEditingController();
-    _emailController = TextEditingController(text: user?.email ?? '');
     _addressController = TextEditingController();
     _emergencyContactController = TextEditingController();
-    _patientFormKey = GlobalKey<FormState>();
+
     _patientRepository = ref.read(patientRepositoryProvider);
+
     return PatientNotifierState();
   }
 
@@ -169,6 +173,10 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
     }
   }
 
+  void savePatientIDToLocalCache(PatientsServerIdEntity patient) {
+    CacheHelper.savePatientServerId(patient);
+  }
+
   FutureVoid submitForm({
     VoidCallback? onGenderValidationFailed,
     VoidCallback? onSuccess,
@@ -184,7 +192,7 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
       try {
         final result = await _patientRepository.createPatient(
           ProjectPatientEntity(
-            id: CacheHelper.currentUser?.id ?? '',
+            id: '',
             firstName: _firstNameController.text,
             lastName: _lastNameController.text,
             dateOfBirth: DateTime.parse(_dateOfBirthController.text),
@@ -198,6 +206,14 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
 
         if (result.isSuccess) {
           log('it was successful');
+          final body = PatientsServerIdEntity(
+            id: UniqueKey().toString(),
+            serverType: ref.read(fhirSettingsProvider).serverType,
+            patientId: (result.safeData as Patient).id?.valueString ?? '',
+            patientName: (result.safeData as Patient).name?.first.family?.valueString ?? '',
+          );
+          // log('Saving patient server id: ${body.toJson()}');
+          savePatientIDToLocalCache(body);
           clearForm();
           onSuccess?.call();
           return;

@@ -203,7 +203,15 @@ class _EditLabResultViewState extends ConsumerState<EditLabResultView> {
                           hint: const Text('Select status'),
                           isExpanded: true,
                           items:
-                              ['Registered', 'Partial', 'Preliminary', 'Final', 'Amended', 'Corrected', 'Cancelled'].map((status) {
+                              [
+                                'Registered',
+                                'Partial',
+                                'Preliminary',
+                                'Final',
+                                'Amended',
+                                'Corrected',
+                                'Cancelled',
+                              ].map((status) {
                                 return DropdownMenuItem(value: status, child: Text(status));
                               }).toList(),
                           onChanged: (value) => controller.setSelectedStatus(value),

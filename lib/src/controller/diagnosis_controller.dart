@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:developer';
 
+import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_demo/src/domain/entities/project_diagosis_entity.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/diagnosis_repository.dart';
@@ -14,33 +15,32 @@ final diagnosisController = NotifierProvider.autoDispose<DiagnosisNotifier, Diag
 );
 
 class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
-  late GlobalKey<FormState> _formKey;
-  late TextEditingController _patientIdController;
-  late TextEditingController _conditionController;
-  late TextEditingController _severityController;
-  late TextEditingController _onsetDateController;
-  late TextEditingController _notesController;
-  late TextEditingController _diagnosingDoctorController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _conditionController = TextEditingController();
+  final TextEditingController _severityController = TextEditingController();
+  final TextEditingController _onsetDateController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _diagnosingDoctorController = TextEditingController();
   late DiagnosisRepository _diagnosisRepository;
   late PatientRepository _patientRepository;
   @override
   build() {
     _diagnosisRepository = ref.read(diagnosisRepositoryProvider);
     _patientRepository = ref.read(patientRepositoryProvider);
-    _formKey = GlobalKey<FormState>();
-    _patientIdController = TextEditingController();
-    _conditionController = TextEditingController();
-    _severityController = TextEditingController();
-    _onsetDateController = TextEditingController();
-    _notesController = TextEditingController();
-    _diagnosingDoctorController = TextEditingController();
 
     return DiagnosisNotifierState();
   }
 
+  // -------- GETTERS --------
+  GlobalKey<FormState> get formKey => _formKey;
+  TextEditingController get conditionController => _conditionController;
+  TextEditingController get severityController => _severityController;
+  TextEditingController get onsetDateController => _onsetDateController;
+  TextEditingController get notesController => _notesController;
+  TextEditingController get diagnosingDoctorController => _diagnosingDoctorController;
+
   void clearForm() {
     _formKey.currentState?.reset();
-    _patientIdController.clear();
     _conditionController.clear();
     _severityController.clear();
     _onsetDateController.clear();
@@ -57,6 +57,10 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
     state = state.copyWith(selectedStatus: status);
   }
 
+  void updatePatientId(String patientId) {
+    state = state.copyWith(patientId: patientId);
+  }
+
   formatOnsetDate(DateTime date) {
     _onsetDateController.text =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -65,7 +69,7 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
   void populateFormForEdit(DiagnosticReport diagnosis) {
     // Populate patient ID
     if (diagnosis.subject?.reference?.valueString != null) {
-      _patientIdController.text = diagnosis.subject!.reference!.valueString?.split('/').last ?? '';
+      updatePatientId(diagnosis.subject!.reference!.valueString!.split('/').last);
     }
 
     // Populate condition
@@ -166,10 +170,11 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
 
       state = state.copyWith(isLoading: true);
       try {
+        final patientId = state.patientId?.removeCharactersFromPatientId ?? '';
         // Validate patient exists before creating diagnosis
-        final patientExists = await _patientRepository.validatePatientExists(_patientIdController.text);
+        final patientExists = await _patientRepository.validatePatientExists(patientId);
         if (!patientExists) {
-          log('[Diagnosis] Patient/${_patientIdController.text} does not exist on server');
+          log('[Diagnosis] Patient/${state.patientId ?? ''} does not exist on server');
           state = state.copyWith(isLoading: false);
           onPatientNotFound?.call();
           return;
@@ -177,7 +182,7 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
 
         final result = await _diagnosisRepository.createDiagnosis(
           ProjectDiagosisEntity(
-            patientID: _patientIdController.text,
+            patientID: patientId,
             diagnosis: _conditionController.text,
             severity: state.selectedSeverity ?? '',
             clinicalStatus: state.selectedStatus ?? '',
@@ -228,9 +233,11 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
       state = state.copyWith(isLoading: true);
       try {
         // Validate patient exists before creating diagnosis
-        final patientExists = await _patientRepository.validatePatientExists(_patientIdController.text);
+        final patientId = state.patientId?.removeCharactersFromPatientId ?? '';
+
+        final patientExists = await _patientRepository.validatePatientExists(patientId);
         if (!patientExists) {
-          log('[Diagnosis] Patient/${_patientIdController.text} does not exist on server');
+          log('[Diagnosis] Patient/$patientId does not exist on server');
           state = state.copyWith(isLoading: false);
           onPatientNotFound?.call();
           return;
@@ -269,20 +276,12 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
       }
     }
   }
-
-  // -------- GETTERS --------
-  GlobalKey<FormState> get formKey => _formKey;
-  TextEditingController get patientIdController => _patientIdController;
-  TextEditingController get conditionController => _conditionController;
-  TextEditingController get severityController => _severityController;
-  TextEditingController get onsetDateController => _onsetDateController;
-  TextEditingController get notesController => _notesController;
-  TextEditingController get diagnosingDoctorController => _diagnosingDoctorController;
 }
 
 class DiagnosisNotifierState {
   final String? selectedSeverity;
   final String? selectedStatus;
+  final String? patientId;
   final bool isLoading;
   final bool deleteLoading;
 
@@ -291,7 +290,9 @@ class DiagnosisNotifierState {
   DiagnosisNotifierState({
     this.selectedSeverity,
     this.selectedStatus,
+    this.patientId,
     this.isLoading = false,
+
     this.deleteLoading = false,
     this.diagnosesList = const [],
   });
@@ -299,6 +300,7 @@ class DiagnosisNotifierState {
   DiagnosisNotifierState copyWith({
     Object? selectedSeverity = _sentinel,
     Object? selectedStatus = _sentinel,
+    String? patientId,
     bool? isLoading,
     bool? deleteLoading,
     List<DiagnosticReport>? diagnosesList,
@@ -309,6 +311,7 @@ class DiagnosisNotifierState {
       isLoading: isLoading ?? this.isLoading,
       deleteLoading: deleteLoading ?? this.deleteLoading,
       diagnosesList: diagnosesList ?? this.diagnosesList,
+      patientId: patientId ?? this.patientId,
     );
   }
 }

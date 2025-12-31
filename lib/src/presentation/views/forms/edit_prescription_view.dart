@@ -74,19 +74,18 @@ class _EditPrescriptionViewState extends ConsumerState<EditPrescriptionView> {
                   textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
 
-                MoodTextfield(
-                  labelText: 'Patient ID *',
-                  hintText: 'Enter patient identifier',
-                  controller: controller.patientIdController,
-                  prefixIcon: const Icon(Icons.person),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter patient ID';
-                    }
-                    return null;
-                  },
-                ),
-
+                // MoodTextfield(
+                //   labelText: 'Patient ID *',
+                //   hintText: 'Enter patient identifier',
+                //   controller: controller.patientIdController,
+                //   prefixIcon: const Icon(Icons.person),
+                //   validator: (value) {
+                //     if (value == null || value.isEmpty) {
+                //       return 'Please enter patient ID';
+                //     }
+                //     return null;
+                //   },
+                // ),
                 MoodTextfield(
                   labelText: 'Medication Name *',
                   hintText: 'Enter medication name',

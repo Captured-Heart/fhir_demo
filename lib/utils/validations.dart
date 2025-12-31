@@ -59,4 +59,15 @@ class AppValidations {
     }
     return null;
   }
+
+  static String? validateNumberOnly(String? value, {String fieldName = "This field"}) {
+    if (value == null || value.isEmpty) {
+      return '$fieldName cannot be empty';
+    }
+    final numericRegex = RegExp(r'^\d+$');
+    if (!numericRegex.hasMatch(value)) {
+      return '$fieldName must contain only digits';
+    }
+    return null;
+  }
 }
