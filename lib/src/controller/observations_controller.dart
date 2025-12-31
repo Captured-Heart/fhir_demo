@@ -58,59 +58,35 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
         final value = component.valueQuantity?.value?.valueString ?? '';
 
         switch (code) {
-          case '8480-6': // Systolic BP
-          case '8462-4': // Diastolic BP
+          case FhirCodeProjectEnum.systolicBloodPressure:
+          case FhirCodeProjectEnum.diastolicBloodPressure:
             if (_bloodPressureController.text.isEmpty) {
               _bloodPressureController.text = value;
             } else {
               _bloodPressureController.text = '${_bloodPressureController.text}/$value';
             }
             break;
-          case '8867-4': // Heart rate
+          case FhirCodeProjectEnum.heartRate:
             _heartRateController.text = value;
             break;
-          case '8310-5': // Body temperature
+          case FhirCodeProjectEnum.bodyTemperature:
             _temperatureController.text = value;
             break;
-          case '9279-1': // Respiratory rate
+          case FhirCodeProjectEnum.respiratoryRate:
             _respiratoryRateController.text = value;
             break;
-          case '2708-6': // Oxygen saturation
+          case FhirCodeProjectEnum.oxygenSaturation:
             _oxygenSaturationController.text = value;
             break;
-          case '29463-7': // Body weight
+          case FhirCodeProjectEnum.bodyWeight:
             _weightController.text = value;
             break;
-          case '8302-2': // Body height
+          case FhirCodeProjectEnum.bodyHeight:
             _heightController.text = value;
             break;
           case FhirCodeProjectEnum.vitalSignsPanel:
-            // TODO: Handle this case.
-            throw UnimplementedError();
-          case FhirCodeProjectEnum.systolicBloodPressure:
-            // TODO: Handle this case.
-            throw UnimplementedError();
-          case FhirCodeProjectEnum.diastolicBloodPressure:
-            // TODO: Handle this case.
-            throw UnimplementedError();
-          case FhirCodeProjectEnum.heartRate:
-            // TODO: Handle this case.
-            throw UnimplementedError();
-          case FhirCodeProjectEnum.bodyTemperature:
-            // TODO: Handle this case.
-            throw UnimplementedError();
-          case FhirCodeProjectEnum.respiratoryRate:
-            // TODO: Handle this case.
-            throw UnimplementedError();
-          case FhirCodeProjectEnum.oxygenSaturation:
-            // TODO: Handle this case.
-            throw UnimplementedError();
-          case FhirCodeProjectEnum.bodyWeight:
-            // TODO: Handle this case.
-            throw UnimplementedError();
-          case FhirCodeProjectEnum.bodyHeight:
-            // TODO: Handle this case.
-            throw UnimplementedError();
+            // Skip the panel itself, only process individual components
+            break;
         }
       }
     }
