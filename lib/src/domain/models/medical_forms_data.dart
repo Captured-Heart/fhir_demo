@@ -1,10 +1,10 @@
 import 'package:fhir_demo/src/domain/entities/medical_form_entity.dart';
-import 'package:fhir_demo/src/presentation/views/forms/edit_appointment_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/appointments_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/edit_diagnosis_view.dart';
-import 'package:fhir_demo/src/presentation/views/forms/edit_lab_result_view.dart';
-import 'package:fhir_demo/src/presentation/views/forms/edit_observation_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/edit_patient_view.dart';
-import 'package:fhir_demo/src/presentation/views/forms/edit_prescription_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/lab_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/observations_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/prescriptions_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/patient_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/diagnosis_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/prescriptions_result_view.dart';
@@ -163,47 +163,6 @@ enum MedicalFormsData {
         );
       }(),
     };
-    // Widget resultView;
-    // switch (form) {
-    //   case registerPatient:
-    //     resultView = PatientResultDetailView(
-    //       categoryTitle: categoryTitle,
-    //       categoryColor: categoryColor,
-    //       categoryIcon: categoryIcon,
-    //     );
-    //   case diagnosis:
-    //     resultView = DiagnosisResultDetailView(
-    //       categoryTitle: categoryTitle,
-    //       categoryColor: categoryColor,
-    //       categoryIcon: categoryIcon,
-    //     );
-    //   case prescriptions:
-    //     resultView = PrescriptionResultDetailView(
-    //       categoryTitle: categoryTitle,
-    //       categoryColor: categoryColor,
-    //       categoryIcon: categoryIcon,
-    //     );
-    //   case observations:
-    //     resultView = ObservationResultDetailView(
-    //       categoryTitle: categoryTitle,
-    //       categoryColor: categoryColor,
-    //       categoryIcon: categoryIcon,
-    //     );
-    //   case appointments:
-    //     resultView = AppointmentResultDetailView(
-    //       categoryTitle: categoryTitle,
-    //       categoryColor: categoryColor,
-    //       categoryIcon: categoryIcon,
-    //     );
-    //   case labResults:
-    //     resultView = LabResultDetailView(
-    //       categoryTitle: categoryTitle,
-    //       categoryColor: categoryColor,
-    //       categoryIcon: categoryIcon,
-    //     );
-    // }
-
-    // Navigator.push(context, MaterialPageRoute(builder: (context) => resultView));
   }
 
   // navigate to edit form view
@@ -222,19 +181,19 @@ enum MedicalFormsData {
       }(),
 
       MedicalFormsData.prescriptions => () {
-        navigateToEditForm(EditPrescriptionView(prescription: (arguments as MedicationRequest)));
+        navigateToEditForm(PrescriptionsView(prescription: (arguments as MedicationRequest)));
       }(),
 
       MedicalFormsData.observations => () {
-        navigateToEditForm(EditObservationView(observation: (arguments as Observation)));
+        navigateToEditForm(ObservationsView(observation: (arguments as Observation)));
       }(),
 
       MedicalFormsData.appointments => () {
-        navigateToEditForm(EditAppointmentView(appointment: (arguments as Appointment)));
+        navigateToEditForm(AppointmentsView(appointment: (arguments as Appointment), ));
       }(),
 
       MedicalFormsData.labResults => () {
-        navigateToEditForm(EditLabResultView(labResult: (arguments as DiagnosticReport)));
+        navigateToEditForm(LabView(labResult: (arguments as DiagnosticReport)   ));
       }(),
     };
   }

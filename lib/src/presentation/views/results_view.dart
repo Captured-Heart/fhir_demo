@@ -1,7 +1,4 @@
-import 'dart:developer';
-
 import 'package:fhir_demo/constants/spacings.dart';
-import 'package:fhir_demo/hive_helper/cache_helper.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/custom_screen_header.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
@@ -17,8 +14,6 @@ class ResultsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final body = CacheHelper.getPatientServerId();
-    inspect(body);
     return Scaffold(
       body: SafeArea(
         child: Column(

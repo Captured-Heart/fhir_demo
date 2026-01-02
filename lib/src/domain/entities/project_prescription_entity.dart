@@ -1,3 +1,4 @@
+import 'package:fhir_demo/constants/api_constants.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 
@@ -31,7 +32,6 @@ class ProjectPrescriptionEntity {
       intent: MedicationRequestIntent.order,
       medicationX: CodeableConcept(text: medication.toFhirString),
       subject: Reference(reference: 'Patient/$patientID'.toFhirString),
-
       dosageInstruction: [
         Dosage(
           text: instructions?.toFhirString,
@@ -49,6 +49,7 @@ class ProjectPrescriptionEntity {
       authoredOn: startDate.toFhirDateTime,
       performer: Reference(display: doctor.toFhirString),
       performerType: CodeableConcept(text: 'Doctor'.toFhirString),
+      identifier: [Identifier(value: ApiConstants.projectIdentifier.toFhirString)],
     );
 
     if (existingPrescription != null) {

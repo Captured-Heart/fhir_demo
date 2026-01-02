@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_demo/src/domain/entities/project_prescription_entity.dart';
+import 'package:fhir_demo/src/domain/repository/fhir_repositories/patient_repository.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/prescription_repository.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/widgets.dart';
@@ -22,12 +23,15 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
   final TextEditingController _instructionsController = TextEditingController();
   final TextEditingController _prescribingDoctorController = TextEditingController();
   final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _patientIdController = TextEditingController();
+
   late PrescriptionRepository _prescriptionRepository;
+  late PatientRepository _patientRepository;
 
   @override
   build() {
     _prescriptionRepository = ref.read(prescriptionRepositoryProvider);
-
+    _patientRepository = ref.read(patientRepositoryProvider);
     return PrescriptionsNotifierState();
   }
 
@@ -54,6 +58,7 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
 
   void updatePatientId(String patientId) {
     state = state.copyWith(patientId: patientId);
+    _patientIdController.text = patientId;
   }
 
   void populateFormForEdit(MedicationRequest prescription) {
@@ -157,7 +162,12 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
     }
   }
 
-  FutureVoid submitForm({VoidCallback? onRouteofAdminFailed, VoidCallback? onSuccess, VoidCallback? onError}) async {
+  FutureVoid submitForm({
+    VoidCallback? onRouteofAdminFailed,
+    required VoidCallback onPatientNotFound,
+    VoidCallback? onSuccess,
+    VoidCallback? onError,
+  }) async {
     if (_formKey.currentState!.validate()) {
       if (state.selectedRoute == null) {
         onRouteofAdminFailed?.call();
@@ -166,6 +176,14 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
 
       state = state.copyWith(isLoading: true);
       final patientId = state.patientId?.removeCharactersFromPatientId ?? '';
+
+      final patientExists = await _patientRepository.validatePatientExists(patientId);
+      if (!patientExists) {
+        log('[Diagnosis] Patient/${state.patientId ?? ''} does not exist on server');
+        state = state.copyWith(isLoading: false);
+        onPatientNotFound.call();
+        return;
+      }
       try {
         final result = await _prescriptionRepository.createPrescription(
           ProjectPrescriptionEntity(
@@ -261,6 +279,7 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
   TextEditingController get instructionsController => _instructionsController;
   TextEditingController get prescribingDoctorController => _prescribingDoctorController;
   TextEditingController get startDateController => _startDateController;
+  TextEditingController get patientIdController => _patientIdController;
 }
 
 class PrescriptionsNotifierState {

@@ -15,7 +15,7 @@ import 'package:fhir_demo/src/presentation/views/forms/diagnosis_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/prescriptions_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/observations_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/appointments_view.dart';
-import 'package:fhir_demo/src/presentation/views/forms/lab_results_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/lab_view.dart';
 import 'package:fhir_demo/src/presentation/widgets/themes/app_themes.dart';
 
 void main() async {
@@ -75,7 +75,7 @@ class MainApp extends ConsumerWidget {
               NavRoutes.prescriptionsRoute => PrescriptionsView(),
               NavRoutes.observationsRoute => ObservationsView(),
               NavRoutes.appointmentsRoute => AppointmentsView(),
-              NavRoutes.labResultsRoute => LabResultsView(),
+              NavRoutes.labResultsRoute => LabView(),
               _ => SplashView(),
             };
           },

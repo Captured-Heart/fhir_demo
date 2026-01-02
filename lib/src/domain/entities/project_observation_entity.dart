@@ -1,3 +1,4 @@
+import 'package:fhir_demo/constants/api_constants.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 
@@ -54,7 +55,7 @@ class ProjectObservationEntity {
                 ),
               ],
             ),
-            valueString: systolicBloodPressure?.toFhirString,
+            valueQuantity: Quantity(unit: 'mmHg'.toFhirString, value: num.parse(systolicBloodPressure!).toFhirDecimal),
           ),
 
         if (diastolicBloodPressure != null)
@@ -68,7 +69,7 @@ class ProjectObservationEntity {
                 ),
               ],
             ),
-            valueString: diastolicBloodPressure?.toFhirString,
+            valueQuantity: Quantity(unit: 'mmHg'.toFhirString, value: num.parse(diastolicBloodPressure!).toFhirDecimal),
           ),
         if (heartRate != null)
           ObservationComponent(
@@ -81,7 +82,7 @@ class ProjectObservationEntity {
                 ),
               ],
             ),
-            valueString: heartRate?.toFhirString,
+            valueQuantity: Quantity(unit: 'bpm'.toFhirString, value: num.parse(heartRate!).toFhirDecimal),
           ),
         if (temperature != null)
           ObservationComponent(
@@ -107,7 +108,7 @@ class ProjectObservationEntity {
                 ),
               ],
             ),
-            valueString: respiratoryRate?.toFhirString,
+            valueQuantity: Quantity(unit: 'breaths/min'.toFhirString, value: num.parse(respiratoryRate!).toFhirDecimal),
           ),
         if (oxygenSaturation != null)
           ObservationComponent(
@@ -150,6 +151,7 @@ class ProjectObservationEntity {
           ),
       ],
       note: clinicalNotes != null ? [Annotation(text: clinicalNotes!.toFhirMarkdown)] : null,
+      identifier: [Identifier(value: ApiConstants.projectIdentifier.toFhirString)],
     );
 
     if (existingObservation != null) {
@@ -169,7 +171,7 @@ class ProjectObservationEntity {
 }
 
 enum FhirCodeProjectEnum {
-  vitalSignsPanel('85353-1', 'Vital signs, weight, height, head circumference, oxygen saturation and BMI panel'),
+  vitalSignsPanel('85353-1', 'Vital signs, weight, height, temperature, oxygen saturation and respiratory rate panel'),
   systolicBloodPressure('8480-6', 'Systolic Blood Pressure'),
   diastolicBloodPressure('8462-4', 'Diastolic Blood Pressure'),
   heartRate('8867-4', 'Heart Rate'),

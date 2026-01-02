@@ -1,3 +1,4 @@
+import 'package:fhir_demo/constants/api_constants.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 
@@ -24,7 +25,7 @@ class ProjectAppointmentEntity {
     this.notes,
   });
 
-  MapStringDynamic addAppointment() {
+  MapStringDynamic addAppointment({Appointment? existingAppointment}) {
     final body = Appointment(
       status: AppointmentStatus.values.firstWhere(
         (e) => e.valueString?.toLowerCase() == status.toLowerCase(),
@@ -36,7 +37,10 @@ class ProjectAppointmentEntity {
           status: ParticipationStatus.accepted,
         ),
         AppointmentParticipant(
-          actor: Reference(reference: 'Practitioner/$doctor'.toFhirString),
+          actor: Reference(
+            // reference: 'Practitioner/$doctor'.toFhirString, //! I DON'T HAAVE DOCTOR ID
+            display: doctor.toFhirString,
+          ),
           status: ParticipationStatus.accepted,
         ),
       ],
@@ -46,7 +50,22 @@ class ProjectAppointmentEntity {
       description: reasonForVisit.toFhirString,
       comment: notes?.toFhirString,
       slot: location != null ? [Reference(display: location?.toFhirString)] : null,
+      identifier: [Identifier(value: ApiConstants.projectIdentifier.toFhirString)],
     );
+
+    if (existingAppointment != null) {
+      final uppdatedBody = existingAppointment.copyWith(
+        status: body.status,
+        participant: body.participant,
+        appointmentType: body.appointmentType,
+        start: body.start,
+        end: body.end,
+        description: body.description,
+        comment: body.comment,
+        slot: body.slot,
+      );
+      return uppdatedBody.toJson();
+    }
     return body.toJson();
   }
 }

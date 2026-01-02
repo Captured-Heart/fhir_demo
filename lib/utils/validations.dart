@@ -70,4 +70,16 @@ class AppValidations {
     }
     return null;
   }
+
+  //120/80
+  static String? validateBloodPressure(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Blood Pressure is optional
+    }
+    final bpRegex = RegExp(r'^\d{2,3}/\d{2,3}$');
+    if (!bpRegex.hasMatch(value)) {
+      return 'format must be (e.g., 120/80)';
+    }
+    return null;
+  }
 }

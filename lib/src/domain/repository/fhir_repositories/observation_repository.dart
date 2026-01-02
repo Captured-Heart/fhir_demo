@@ -41,12 +41,14 @@ class ObservationRepositoryImpl implements ObservationRepository {
         return ApiResponse.success(response);
       } else {
         return ApiResponse.error(
-          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          'Failed to create Observation: ${response.statusCode} ${response.errorMessage}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createObservation: $e');
+      inspect(e);
+
       return ApiResponse.error(e.toString());
     }
   }
@@ -81,12 +83,12 @@ class ObservationRepositoryImpl implements ObservationRepository {
         return ApiResponse.success(response);
       } else {
         return ApiResponse.error(
-          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          'Failed to create Observation: ${response.statusCode} ${response.errorMessage}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createObservation: $e');
       return ApiResponse.error(e.toString());
     }
   }
@@ -120,10 +122,10 @@ class ObservationRepositoryImpl implements ObservationRepository {
 
         return ApiResponse.success(prescriptionData);
       } else {
-        return ApiResponse.error('Failed to create patient: ${response.statusCode} ${response.errorMessage}');
+        return ApiResponse.error('Failed to create Observation: ${response.statusCode} ${response.errorMessage}');
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createObservation: $e');
       return ApiResponse.error(e.toString());
     }
   }

@@ -168,27 +168,32 @@ class _DiagnosisViewState extends ConsumerState<DiagnosisView> {
                 MoodPrimaryButton(
                   title: 'Record Diagnosis',
                   onPressed:
-                      () => diagnosisCtrl.submitDiagnosisForm(
-                        onSeverityValidationFailed: () {
-                          context.showSnackBar(message: 'Please select a severity', isError: true);
-                        },
-                        onStatusValidationFailed: () {
-                          context.showSnackBar(message: 'Please select a clinical status', isError: true);
-                        },
-                        onPatientNotFound: () {
-                          context.showSnackBar(
-                            message: 'Patient ID not found. Please create the patient first.',
-                            isError: true,
-                          );
-                        },
-                        onSuccess: () {
-                          Navigator.of(context).pop();
-                          context.showSnackBar(message: 'Diagnosis recorded successfully');
-                        },
-                        onError: () {
-                          context.showSnackBar(message: 'Failed to record diagnosis. Please try again.', isError: true);
-                        },
-                      ),
+                      diagnosisState.isLoading
+                          ? null
+                          : () => diagnosisCtrl.submitDiagnosisForm(
+                            onSeverityValidationFailed: () {
+                              context.showSnackBar(message: 'Please select a severity', isError: true);
+                            },
+                            onStatusValidationFailed: () {
+                              context.showSnackBar(message: 'Please select a clinical status', isError: true);
+                            },
+                            onPatientNotFound: () {
+                              context.showSnackBar(
+                                message: 'Patient ID not found. Please create the patient first.',
+                                isError: true,
+                              );
+                            },
+                            onSuccess: () {
+                              Navigator.of(context).pop();
+                              context.showSnackBar(message: 'Diagnosis recorded successfully');
+                            },
+                            onError: () {
+                              context.showSnackBar(
+                                message: 'Failed to record diagnosis. Please try again.',
+                                isError: true,
+                              );
+                            },
+                          ),
                   state: diagnosisState.isLoading ? ButtonState.loading : ButtonState.loaded,
                   bGcolor: const Color(0xff2196F3),
                 ),

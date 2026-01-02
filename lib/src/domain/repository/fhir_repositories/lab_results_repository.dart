@@ -17,7 +17,10 @@ abstract class LabResultsRepository {
   Future<ApiResponse> createLabResults(ProjectLabResultEntity labResultsData);
   Future<Map<String, dynamic>?> getLabResultsById(String labResultsId);
   Future<ApiResponse<List<DiagnosticReport>>> getAllLabResultsByIdentifier();
-  Future<Map<String, dynamic>?> editLabResultsById(String labResultsId);
+  Future<ApiResponse> editLabResultsById({
+    required ProjectLabResultEntity labResultsData,
+    required DiagnosticReport existingLabResults,
+  });
   Future<bool> deleteLabResultsById(String labResultsId);
   Future<List<Map<String, dynamic>>> searchLabResults();
 }
@@ -35,12 +38,12 @@ class LabResultsRepositoryImpl implements LabResultsRepository {
         return ApiResponse.success(response);
       } else {
         return ApiResponse.error(
-          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          'Failed to create lab result: ${response.statusCode} ${response.errorMessage}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createLabResult: $e');
       return ApiResponse.error(e.toString());
     }
   }
@@ -62,9 +65,27 @@ class LabResultsRepositoryImpl implements LabResultsRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> editLabResultsById(String labResultsId) async {
-    // TODO: implement editLabResultsById
-    throw UnimplementedError();
+  Future<ApiResponse> editLabResultsById({
+    required ProjectLabResultEntity labResultsData,
+    required DiagnosticReport existingLabResults,
+  }) async {
+    try {
+      final response = await networkCallsRepository.put(
+        '${ApiUrl.fhirLabResult.url}/${existingLabResults.id}',
+        data: labResultsData.addLabResult(existingLabResult: existingLabResults),
+      );
+      if (response.isSuccess) {
+        return ApiResponse.success(response);
+      } else {
+        return ApiResponse.error(
+          'Failed to create lab result: ${response.statusCode} ${response.errorMessage}',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      log('Error in createLabResult: $e');
+      return ApiResponse.error(e.toString());
+    }
   }
 
   @override
@@ -84,7 +105,7 @@ class LabResultsRepositoryImpl implements LabResultsRepository {
     try {
       final response = await networkCallsRepository.get(
         ApiUrl.fhirLabResult.url,
-        queryParameters: {'identifier': ApiConstants.projectIdentifier},
+        queryParameters: {'identifier': ApiConstants.projectIdentifierLabResult},
       );
       inspect(response.data);
       if (response.isSuccess) {
@@ -96,10 +117,10 @@ class LabResultsRepositoryImpl implements LabResultsRepository {
 
         return ApiResponse.success(prescriptionData);
       } else {
-        return ApiResponse.error('Failed to create patient: ${response.statusCode} ${response.errorMessage}');
+        return ApiResponse.error('Failed to create lab result: ${response.statusCode} ${response.errorMessage}');
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createLabResult: $e');
       return ApiResponse.error(e.toString());
     }
   }
