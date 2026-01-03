@@ -1,10 +1,10 @@
 import 'package:fhir_demo/src/domain/entities/medical_form_entity.dart';
 import 'package:fhir_demo/src/presentation/views/forms/appointments_view.dart';
-import 'package:fhir_demo/src/presentation/views/forms/edit_diagnosis_view.dart';
-import 'package:fhir_demo/src/presentation/views/forms/edit_patient_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/diagnosis_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/lab_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/observations_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/prescriptions_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/register_patient_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/patient_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/diagnosis_result_view.dart';
 import 'package:fhir_demo/src/presentation/views/results/prescriptions_result_view.dart';
@@ -174,10 +174,10 @@ enum MedicalFormsData {
     final form = values.firstWhere((form) => form.id == formId, orElse: () => registerPatient);
     return switch (form) {
       registerPatient => () {
-        navigateToEditForm(EditPatientView(patient: (arguments as Patient)));
+        navigateToEditForm(RegisterPatientView(patient: (arguments as Patient)));
       }(),
       MedicalFormsData.diagnosis => () {
-        navigateToEditForm(EditDiagnosisView(diagnosis: (arguments as DiagnosticReport)));
+        navigateToEditForm(DiagnosisView(diagnosis: (arguments as DiagnosticReport)));
       }(),
 
       MedicalFormsData.prescriptions => () {
@@ -189,11 +189,11 @@ enum MedicalFormsData {
       }(),
 
       MedicalFormsData.appointments => () {
-        navigateToEditForm(AppointmentsView(appointment: (arguments as Appointment), ));
+        navigateToEditForm(AppointmentsView(appointment: (arguments as Appointment)));
       }(),
 
       MedicalFormsData.labResults => () {
-        navigateToEditForm(LabView(labResult: (arguments as DiagnosticReport)   ));
+        navigateToEditForm(LabView(labResult: (arguments as DiagnosticReport)));
       }(),
     };
   }

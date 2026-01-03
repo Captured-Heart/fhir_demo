@@ -225,13 +225,11 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
 
                 // Submit Button
                 MoodPrimaryButton(
-                  title: 'Create Prescription',
+                  title: isEdit ? 'Edit Prescription' : 'Create Prescription',
                   onPressed:
                       prescriptionState.isLoading
                           ? null
-                          : isEdit
-                          ? () => editForm(prescriptionctrl)
-                          : () => submitForm(prescriptionctrl),
+                          : () => isEdit ? editForm(prescriptionctrl) : submitForm(prescriptionctrl),
 
                   state: prescriptionState.isLoading ? ButtonState.loading : ButtonState.loaded,
                   bGcolor: const Color(0xffFF9800),

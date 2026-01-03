@@ -22,6 +22,7 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
   late TextEditingController _emailController;
   late TextEditingController _addressController;
   late TextEditingController _emergencyContactController;
+  late TextEditingController _patientIdController;
   late PatientRepository _patientRepository;
   @override
   build() {
@@ -29,6 +30,7 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
     _firstNameController = TextEditingController(text: user?.name.split(' ').first ?? '');
     _lastNameController = TextEditingController(text: user?.name.split(' ').last ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
+    _patientIdController = TextEditingController();
     _patientFormKey = GlobalKey<FormState>();
     _dateOfBirthController = TextEditingController();
     _genderController = TextEditingController();
@@ -51,6 +53,7 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
   TextEditingController get addressController => _addressController;
   TextEditingController get emergencyContactController => _emergencyContactController;
   GlobalKey<FormState> get patientFormKey => _patientFormKey;
+  TextEditingController get patientIdController => _patientIdController;
 
   void clearForm() {
     _patientFormKey.currentState?.reset();
@@ -70,11 +73,20 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
+  void updatePatientId(String? patientId) {
+    state = state.copyWith(patientId: patientId);
+    _patientIdController.text = patientId ?? '';
+  }
+
   void updateGender(String? gender) {
     state = state.copyWith(selectedGender: gender);
   }
 
   void populateFormForEdit(Patient patient) {
+    // id
+    if (patient.id != null) {
+      updatePatientId(patient.id?.valueString);
+    }
     // Populate name fields
     if (patient.name?.isNotEmpty == true) {
       final name = patient.name!.first;
@@ -288,11 +300,13 @@ class PatientNotifierState {
 
   final String? selectedGender;
   final List<Patient> patientList;
+  final String? patientId;
 
   PatientNotifierState({
     this.isLoading = false,
     this.isDeleteLoading = false,
     this.selectedGender,
+    this.patientId,
     this.patientList = const [],
   });
 
@@ -300,6 +314,7 @@ class PatientNotifierState {
     bool? isLoading,
     bool? isDeleteLoading,
     String? selectedGender,
+    String? patientId,
     List<Patient>? patientList,
   }) {
     return PatientNotifierState(
@@ -307,6 +322,7 @@ class PatientNotifierState {
       isDeleteLoading: isDeleteLoading ?? this.isDeleteLoading,
       selectedGender: selectedGender ?? this.selectedGender,
       patientList: patientList ?? this.patientList,
+      patientId: patientId ?? this.patientId,
     );
   }
 }

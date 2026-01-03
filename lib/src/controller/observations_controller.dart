@@ -102,8 +102,6 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
         switch (code) {
           case FhirCodeProjectEnum.systolicBloodPressure:
           case FhirCodeProjectEnum.diastolicBloodPressure:
-          case FhirCodeProjectEnum.systolicBloodPressure:
-          case FhirCodeProjectEnum.diastolicBloodPressure:
             if (_bloodPressureController.text.isEmpty) {
               _bloodPressureController.text = value;
             } else {
@@ -111,26 +109,20 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
             }
             break;
           case FhirCodeProjectEnum.heartRate:
-          case FhirCodeProjectEnum.heartRate:
             _heartRateController.text = value;
             break;
-          case FhirCodeProjectEnum.bodyTemperature:
           case FhirCodeProjectEnum.bodyTemperature:
             _temperatureController.text = value;
             break;
           case FhirCodeProjectEnum.respiratoryRate:
-          case FhirCodeProjectEnum.respiratoryRate:
             _respiratoryRateController.text = value;
             break;
-          case FhirCodeProjectEnum.oxygenSaturation:
           case FhirCodeProjectEnum.oxygenSaturation:
             _oxygenSaturationController.text = value;
             break;
           case FhirCodeProjectEnum.bodyWeight:
-          case FhirCodeProjectEnum.bodyWeight:
             _weightController.text = value;
             break;
-          case FhirCodeProjectEnum.bodyHeight:
           case FhirCodeProjectEnum.bodyHeight:
             _heightController.text = value;
             break;

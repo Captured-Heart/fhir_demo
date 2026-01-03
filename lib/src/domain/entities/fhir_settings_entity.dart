@@ -1,6 +1,8 @@
 /// Model class for FHIR server settings
 class FhirSettingsEntity {
   final String serverBaseUrl;
+  final String? customServerBaseUrl;
+
   final String apiKey;
   final bool useAuthentication;
   final int requestTimeout;
@@ -8,6 +10,7 @@ class FhirSettingsEntity {
 
   const FhirSettingsEntity({
     required this.serverBaseUrl,
+    this.customServerBaseUrl,
     this.apiKey = '',
     this.useAuthentication = false,
     this.requestTimeout = 30,
@@ -16,6 +19,7 @@ class FhirSettingsEntity {
 
   FhirSettingsEntity copyWith({
     String? serverBaseUrl,
+    String? customServerBaseUrl,
     String? apiKey,
     bool? useAuthentication,
     int? requestTimeout,
@@ -23,6 +27,7 @@ class FhirSettingsEntity {
   }) {
     return FhirSettingsEntity(
       serverBaseUrl: serverBaseUrl ?? this.serverBaseUrl,
+      customServerBaseUrl: customServerBaseUrl ?? this.customServerBaseUrl,
       apiKey: apiKey ?? this.apiKey,
       useAuthentication: useAuthentication ?? this.useAuthentication,
       requestTimeout: requestTimeout ?? this.requestTimeout,
@@ -33,6 +38,7 @@ class FhirSettingsEntity {
   Map<String, dynamic> toJson() {
     return {
       'serverBaseUrl': serverBaseUrl,
+      'customServerBaseUrl': customServerBaseUrl,
       'apiKey': apiKey,
       'useAuthentication': useAuthentication,
       'requestTimeout': requestTimeout,
@@ -43,21 +49,11 @@ class FhirSettingsEntity {
   factory FhirSettingsEntity.fromJson(Map<String, dynamic> json) {
     return FhirSettingsEntity(
       serverBaseUrl: json['serverBaseUrl'] as String? ?? '',
+      customServerBaseUrl: json['customServerBaseUrl'] as String?,
       apiKey: json['apiKey'] as String? ?? '',
       useAuthentication: json['useAuthentication'] as bool? ?? false,
       requestTimeout: json['requestTimeout'] as int? ?? 30,
       serverType: json['serverType'] as String? ?? 'HAPI',
     );
   }
-
-  // Default HAPI FHIR server configuration
-  // factory FhirSettingsEntity.defaultHapi() {
-  //   return const FhirSettingsEntity(
-  //     serverBaseUrl: 'https://hapi.fhir.org/baseR4',
-  //     apiKey: '',
-  //     useAuthentication: false,
-  //     requestTimeout: 30,
-  //     serverType: 'HAPI',
-  //   );
-  // }
 }

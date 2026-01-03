@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
-import 'package:fhir_demo/src/domain/entities/project_diagosis_entity.dart';
+import 'package:fhir_demo/src/domain/entities/project_diagnosis_entity.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/diagnosis_repository.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/patient_repository.dart';
 import 'package:fhir_r4/fhir_r4.dart';
@@ -21,6 +21,7 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
   final TextEditingController _onsetDateController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _diagnosingDoctorController = TextEditingController();
+  final TextEditingController patientIdController = TextEditingController();
   late DiagnosisRepository _diagnosisRepository;
   late PatientRepository _patientRepository;
   @override
@@ -38,6 +39,7 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
   TextEditingController get onsetDateController => _onsetDateController;
   TextEditingController get notesController => _notesController;
   TextEditingController get diagnosingDoctorController => _diagnosingDoctorController;
+  TextEditingController get patientIdTextController => patientIdController;
 
   void clearForm() {
     _formKey.currentState?.reset();
@@ -58,6 +60,7 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
   }
 
   void updatePatientId(String patientId) {
+    patientIdController.text = patientId;
     state = state.copyWith(patientId: patientId);
   }
 
@@ -80,7 +83,7 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
     // Populate status
     if (diagnosis.status.hasValue) {
       final status = diagnosis.status.valueString ?? '';
-      state = state.copyWith(selectedStatus: status.substring(0, 1).toUpperCase() + status.substring(1));
+      state = state.copyWith(selectedStatus: status);
     }
 
     // Populate notes/conclusion
@@ -245,7 +248,7 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
 
         final result = await _diagnosisRepository.editDiagnosisById(
           diagnosisData: ProjectDiagosisEntity(
-            patientID: existingDiagnosis.id?.valueString ?? '',
+            patientID: patientId,
             diagnosis: _conditionController.text,
             severity: state.selectedSeverity ?? '',
             clinicalStatus: state.selectedStatus ?? '',

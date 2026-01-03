@@ -62,6 +62,7 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
   }
 
   void populateFormForEdit(MedicationRequest prescription) {
+    clearForm();
     // Populate patient ID
     if (prescription.subject.reference?.valueString != null) {
       updatePatientId(prescription.subject.reference!.valueString!.split('/').last);
@@ -77,12 +78,10 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
       final dosage = prescription.dosageInstruction!.first;
 
       // Dosage
-      if (dosage.text != null) {
-        _dosageController.text = dosage.text?.valueString ?? '';
-      } else if (dosage.doseAndRate?.isNotEmpty == true) {
+      if (dosage.doseAndRate?.isNotEmpty == true) {
         final doseQuantity = dosage.doseAndRate!.first.doseQuantity;
         if (doseQuantity?.value?.valueString != null) {
-          _dosageController.text = '${doseQuantity!.value!.valueString} ${doseQuantity.unit ?? ''}';
+          _dosageController.text = '${doseQuantity!.value!.valueString}';
         }
       }
 
@@ -98,19 +97,18 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
     }
 
     // Populate duration (from dispenseRequest validity period)
-    if (prescription.dispenseRequest?.validityPeriod?.end != null) {
-      _durationController.text = prescription.dispenseRequest!.validityPeriod!.end.toString();
+    if (prescription.dosageInstruction?.first.timing?.repeat?.duration != null) {
+      _durationController.text = prescription.dosageInstruction!.first.timing!.repeat!.duration!.toString();
     }
 
     // Populate instructions
-    if (prescription.dosageInstruction?.isNotEmpty == true &&
-        prescription.dosageInstruction!.first.patientInstruction != null) {
-      _instructionsController.text = prescription.dosageInstruction!.first.patientInstruction?.valueString ?? '';
+    if (prescription.dosageInstruction?.isNotEmpty == true && prescription.dosageInstruction!.first.text != null) {
+      _instructionsController.text = prescription.dosageInstruction!.first.text?.valueString ?? '';
     }
 
     // Populate prescribing doctor
-    if (prescription.requester?.display != null) {
-      _prescribingDoctorController.text = prescription.requester!.display?.valueString ?? '';
+    if (prescription.performer?.display != null) {
+      _prescribingDoctorController.text = prescription.performer!.display?.valueString ?? '';
     }
 
     // Populate start date

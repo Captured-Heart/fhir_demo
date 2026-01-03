@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/constants/fhir_server_type_enum.dart';
@@ -14,6 +16,7 @@ class AppBarServerSwitch extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settingState = ref.watch(fhirSettingsProvider);
     final settingsCtrl = ref.read(fhirSettingsProvider.notifier);
+    inspect(settingState);
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.kWhite.withValues(alpha: 0.4)),
@@ -22,13 +25,13 @@ class AppBarServerSwitch extends ConsumerWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<FhirServerType>(
           value: FhirServerType.values.firstWhere(
-            (type) => type.name == settingState.serverType,
+            (type) => type.name.toLowerCase() == settingState.serverType.toLowerCase(),
             orElse: () => FhirServerType.values.first,
           ),
           isDense: true,
           isExpanded: false,
           items:
-              FhirServerType.values.where((type) => type != FhirServerType.custom).map((type) {
+              FhirServerType.values.where((type) => type.baseUrl.isNotEmpty).map((type) {
                 return DropdownMenuItem(
                   value: type,
                   child: MoodText.text(
@@ -40,6 +43,8 @@ class AppBarServerSwitch extends ConsumerWidget {
                 );
               }).toList(),
           onChanged: (value) {
+            if (value == FhirServerType.custom) return;
+
             if (value != null) {
               // Updates server type and base URL in settings
               // DioRepository will automatically pick up the change via ref.listen
