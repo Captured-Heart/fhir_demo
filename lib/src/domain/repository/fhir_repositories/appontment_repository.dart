@@ -8,23 +8,26 @@ import 'package:fhir_demo/src/domain/repository/network/network_calls_repository
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final appontmentRepositoryProvider = Provider<AppontmentRepository>((ref) {
+final appointmentRepositoryProvider = Provider<AppointmentRepository>((ref) {
   final networkCallsRepository = ref.watch(networkCallsRepositoryProvider);
-  return AppontmentRepositoryImpl(networkCallsRepository);
+  return AppointmentRepositoryImpl(networkCallsRepository);
 });
 
-abstract class AppontmentRepository {
+abstract class AppointmentRepository {
   Future<ApiResponse> createAppointment(ProjectAppointmentEntity appointmentData);
   Future<Map<String, dynamic>?> getAppointmentById(String appointmentId);
   Future<ApiResponse<List<Appointment>>> getAllAppointmentByIdentifier();
-  Future<Map<String, dynamic>?> editAppointmentById(String appointmentId);
+  Future<ApiResponse> editAppointmentById({
+    required ProjectAppointmentEntity appointmentData,
+    required Appointment existingAppointment,
+  });
   Future<bool> deleteAppointmentById(String appointmentId);
   Future<List<Map<String, dynamic>>> searchAppointment();
 }
 
-class AppontmentRepositoryImpl implements AppontmentRepository {
+class AppointmentRepositoryImpl implements AppointmentRepository {
   final NetworkCallsRepository networkCallsRepository;
-  AppontmentRepositoryImpl(this.networkCallsRepository);
+  AppointmentRepositoryImpl(this.networkCallsRepository);
 
   @override
   Future<ApiResponse> createAppointment(ProjectAppointmentEntity appointmentData) async {
@@ -65,9 +68,28 @@ class AppontmentRepositoryImpl implements AppontmentRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> editAppointmentById(String appointmentId) async {
-    // TODO: implement editAppointmentById
-    throw UnimplementedError();
+  Future<ApiResponse> editAppointmentById({
+    required ProjectAppointmentEntity appointmentData,
+    required Appointment existingAppointment,
+  }) async {
+    try {
+      final response = await networkCallsRepository.put(
+        '${ApiUrl.fhirAppointment.url}/${existingAppointment.id}',
+        data: appointmentData.addAppointment(existingAppointment: existingAppointment),
+      );
+      inspect(response);
+      if (response.isSuccess) {
+        return ApiResponse.success(response);
+      } else {
+        return ApiResponse.error(
+          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      log('Error in createPatient: $e');
+      return ApiResponse.error(e.toString());
+    }
   }
 
   @override

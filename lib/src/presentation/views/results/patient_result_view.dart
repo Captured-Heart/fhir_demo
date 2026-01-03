@@ -3,6 +3,7 @@ import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/src/controller/patient_controller.dart';
 import 'package:fhir_demo/src/domain/models/medical_forms_data.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/detail_row_results.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/no_records_found.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/results_row_action_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
@@ -104,10 +105,13 @@ class _PatientResultDetailViewState extends ConsumerState<PatientResultDetailVie
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   spacing: 8,
                                   children: [
-                                    _buildDetailRow(context, 'Status', result.active?.toString() ?? 'Unknown'),
-                                    _buildDetailRow(context, 'ID', result.id?.toString() ?? 'N/A'),
+                                    BuildDetailRow(label: 'Status', value: result.active?.toString() ?? 'Unknown'),
+                                    BuildDetailRow(label: 'ID', value: result.id?.toString() ?? 'N/A'),
                                     if (result.address != null)
-                                      _buildDetailRow(context, 'Details', result.address?.first.text?.toString() ?? ''),
+                                      BuildDetailRow(
+                                        label: 'Details',
+                                        value: result.address?.first.text?.toString() ?? '',
+                                      ),
                                     const Divider(height: 24),
 
                                     // Action buttons
@@ -143,23 +147,6 @@ class _PatientResultDetailViewState extends ConsumerState<PatientResultDetailVie
                   ),
                 ],
               ),
-    );
-  }
-
-  Widget _buildDetailRow(BuildContext context, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 80,
-          child: MoodText.text(
-            text: '$label:',
-            context: context,
-            textStyle: context.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-        ),
-        Expanded(child: MoodText.text(text: value, context: context, textStyle: context.textTheme.bodySmall)),
-      ],
     );
   }
 }

@@ -61,7 +61,6 @@ class ProjectDiagosisEntity {
     if (existingDiagnosis != null) {
       // Copy over any necessary fields from existingDiagnosis if needed
       final updatedBody = existingDiagnosis.copyWith(
-        id: body.id,
         language: body.language,
         status: body.status,
         code: body.code,

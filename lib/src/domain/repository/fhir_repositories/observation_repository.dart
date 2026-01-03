@@ -17,7 +17,10 @@ abstract class ObservationRepository {
   Future<ApiResponse> createObservation(ProjectObservationEntity observationData);
   Future<Map<String, dynamic>?> getObservationById(String observationId);
   Future<ApiResponse<List<Observation>>> getAllObservationByIdentifier();
-  Future<Map<String, dynamic>?> editObservationById(String observationId);
+  Future<ApiResponse> editObservationById({
+    required ProjectObservationEntity observationData,
+    required Observation existingObservation,
+  });
   Future<bool> deleteObservationById(String observationId);
   Future<List<Map<String, dynamic>>> searchObservation();
 }
@@ -38,12 +41,14 @@ class ObservationRepositoryImpl implements ObservationRepository {
         return ApiResponse.success(response);
       } else {
         return ApiResponse.error(
-          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          'Failed to create Observation: ${response.statusCode} ${response.errorMessage}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createObservation: $e');
+      inspect(e);
+
       return ApiResponse.error(e.toString());
     }
   }
@@ -65,9 +70,27 @@ class ObservationRepositoryImpl implements ObservationRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> editObservationById(String observationId) async {
-    // TODO: implement editObservationById
-    throw UnimplementedError();
+  Future<ApiResponse> editObservationById({
+    required ProjectObservationEntity observationData,
+    required Observation existingObservation,
+  }) async {
+    try {
+      final response = await networkCallsRepository.put(
+        '${ApiUrl.fhirObservation.url}/${existingObservation.id}',
+        data: observationData.addObservation(existingObservation: existingObservation),
+      );
+      if (response.isSuccess) {
+        return ApiResponse.success(response);
+      } else {
+        return ApiResponse.error(
+          'Failed to create Observation: ${response.statusCode} ${response.errorMessage}',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      log('Error in createObservation: $e');
+      return ApiResponse.error(e.toString());
+    }
   }
 
   @override
@@ -99,10 +122,10 @@ class ObservationRepositoryImpl implements ObservationRepository {
 
         return ApiResponse.success(prescriptionData);
       } else {
-        return ApiResponse.error('Failed to create patient: ${response.statusCode} ${response.errorMessage}');
+        return ApiResponse.error('Failed to create Observation: ${response.statusCode} ${response.errorMessage}');
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createObservation: $e');
       return ApiResponse.error(e.toString());
     }
   }

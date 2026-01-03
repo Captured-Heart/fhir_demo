@@ -1,9 +1,11 @@
 import 'package:fhir_demo/src/controller/patient_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:fhir_demo/utils/validations.dart';
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
@@ -16,24 +18,30 @@ import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart'
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 
 class RegisterPatientView extends ConsumerStatefulWidget {
-  const RegisterPatientView({super.key});
+  const RegisterPatientView({super.key, this.patient});
+  final Patient? patient;
 
   @override
   ConsumerState<RegisterPatientView> createState() => _RegisterPatientViewState();
 }
 
 class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
+  bool get isEdit => widget.patient != null;
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => showInstructionDialog(
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isEdit) {
+        ref.read(patientController.notifier).populateFormForEdit(widget.patient!);
+        return;
+      }
+      showInstructionDialog(
         context: context,
         title: 'Register Patient',
         subtitle: 'Fill out the form to register a new patient in the system. ',
         sharedKeys: SharedKeys.patientInstructionDontShowAgain,
-      ),
-    );
+      );
+    });
   }
 
   Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
@@ -53,7 +61,7 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
   Widget build(BuildContext context) {
     final patientCtrl = ref.read(patientController.notifier);
     final patientState = ref.watch(patientController);
-
+    //
     return Scaffold(
       appBar: AppBar(
         title: const Text('Register Patient'),
@@ -78,7 +86,12 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
                   context: context,
                   textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
-
+                if (isEdit)
+                  PatientIdDropdown(
+                    isEdit: isEdit,
+                    onChanged: (value) => patientCtrl.updatePatientId(value),
+                    patientIdController: patientCtrl.patientIdController,
+                  ),
                 // First Name
                 MoodTextfield(
                   labelText: 'First Name *',
@@ -198,20 +211,9 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
 
                 // Submit Button
                 MoodPrimaryButton(
-                  title: 'Register Patient',
+                  title: isEdit ? 'Update Patient' : 'Register Patient',
                   onPressed:
-                      () => patientCtrl.submitForm(
-                        onGenderValidationFailed: () {
-                          context.showSnackBar(message: 'Please select a gender', isError: true);
-                        },
-                        onSuccess: () {
-                          context.showSnackBar(message: 'Patient registered successfully');
-                          Navigator.pop(context);
-                        },
-                        onError: () {
-                          context.showSnackBar(message: 'Failed to register patient', isError: true);
-                        },
-                      ),
+                      patientState.isLoading ? null : () => isEdit ? editForm(patientCtrl) : submitForm(patientCtrl),
                   state: patientState.isLoading ? ButtonState.loading : ButtonState.loaded,
                   bGcolor: const Color(0xff4CAF50),
                 ),
@@ -225,6 +227,37 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
           ),
         ),
       ),
+    );
+  }
+
+  void submitForm(PatientNotifier patientCtrl) {
+    patientCtrl.submitForm(
+      onGenderValidationFailed: () {
+        context.showSnackBar(message: 'Please select a gender', isError: true);
+      },
+      onSuccess: () {
+        context.showSnackBar(message: 'Patient registered successfully');
+        Navigator.pop(context);
+      },
+      onError: () {
+        context.showSnackBar(message: 'Failed to register patient', isError: true);
+      },
+    );
+  }
+
+  void editForm(PatientNotifier patientCtrl) {
+    patientCtrl.editPatientForm(
+      existingPatient: widget.patient!,
+      onGenderValidationFailed: () {
+        context.showSnackBar(message: 'Please select a gender', isError: true);
+      },
+      onSuccess: () {
+        context.showSnackBar(message: 'Patient updated successfully');
+        Navigator.pop(context);
+      },
+      onError: () {
+        context.showSnackBar(message: 'Failed to update patient', isError: true);
+      },
     );
   }
 }

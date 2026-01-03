@@ -1,41 +1,49 @@
 import 'package:fhir_demo/src/controller/appointments_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/src/presentation/widgets/textfield/app_drop_down.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/button_state.dart';
 import 'package:fhir_demo/constants/extension.dart';
-import 'package:fhir_demo/constants/spacings.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/primary_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 
 class AppointmentsView extends ConsumerStatefulWidget {
-  const AppointmentsView({super.key});
+  const AppointmentsView({super.key, this.appointment});
+  final Appointment? appointment;
 
   @override
   ConsumerState<AppointmentsView> createState() => _AppointmentsViewState();
 }
 
 class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
+  bool get isEdit => widget.appointment != null;
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => showInstructionDialog(
-        context: context,
-        title: 'Appointments',
-        subtitle: 'Fill out the form to schedule a new appointment in the system. ',
-        sharedKeys: SharedKeys.appointmentInstructionDontShowAgain,
-      ),
-    );
-  }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isEdit && widget.appointment != null) {
+        ref.read(appointmentsController.notifier).populateFormForEdit(widget.appointment!);
+      }
 
-  ButtonState _submitState = ButtonState.initial;
+      if (!isEdit) {
+        showInstructionDialog(
+          context: context,
+          title: 'Appointments',
+          subtitle: 'Fill out the form to schedule a new appointment in the system. ',
+          sharedKeys: SharedKeys.appointmentInstructionDontShowAgain,
+        );
+      }
+    });
+  }
 
   Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
     final DateTime? picked = await showDatePicker(
@@ -56,25 +64,6 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
     }
   }
 
-  Future<void> _submitForm() async {
-    final appointmentCtrl = ref.read(appointmentsController.notifier);
-    if (appointmentCtrl.formKey.currentState!.validate()) {
-      setState(() => _submitState = ButtonState.loading);
-
-      // TODO: Implement FHIR appointment submission
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() => _submitState = ButtonState.initial);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Appointment scheduled successfully!'), backgroundColor: Colors.green),
-        );
-        Navigator.pop(context);
-      }
-    }
-  }
-
   void _clearForm() {
     ref.read(appointmentsController.notifier).clearForm();
   }
@@ -82,8 +71,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
   @override
   Widget build(BuildContext context) {
     final appointmentCtrl = ref.watch(appointmentsController.notifier);
-    final state = ref.watch(appointmentsController);
-
+    final appointmentState = ref.watch(appointmentsController);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Schedule Appointment'),
@@ -109,17 +97,12 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 ),
 
                 // Patient ID
-                MoodTextfield(
-                  labelText: 'Patient ID *',
-                  hintText: 'Enter patient identifier',
-                  controller: appointmentCtrl.patientIdController,
-                  prefixIcon: const Icon(Icons.person),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter patient ID';
-                    }
-                    return null;
+                PatientIdDropdown(
+                  onChanged: (patientId) {
+                    appointmentCtrl.updatePatientId(patientId);
                   },
+                  isEdit: isEdit,
+                  patientIdController: appointmentCtrl.patientIdController,
                 ),
 
                 // Doctor/Practitioner
@@ -127,6 +110,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                   labelText: 'Doctor/Practitioner *',
                   hintText: 'Enter doctor name',
                   controller: appointmentCtrl.doctorController,
+                  inputFormatters: [],
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.local_hospital),
                   validator: (value) {
@@ -138,37 +122,14 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 ),
 
                 // Appointment Type
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    MoodText.text(
-                      text: 'Appointment Type *',
-                      context: context,
-                      textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                        borderRadius: AppSpacings.borderRadiusk20All,
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: state.selectedType,
-                          hint: const Text('Select type'),
-                          isExpanded: true,
-                          items:
-                              ['Routine', 'Follow-up', 'Emergency', 'Consultation', 'Check-up'].map((type) {
-                                return DropdownMenuItem(value: type, child: Text(type));
-                              }).toList(),
-                          onChanged: (value) {
-                            appointmentCtrl.setSelectedType(value);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                AppDropDownWidget(
+                  value: appointmentState.selectedType,
+                  hintText: 'Select type',
+                  labelText: 'Appointment Type *',
+                  items: ['Routine', 'Follow-up', 'Emergency', 'Consultation', 'Check-up'],
+                  onChanged: (value) {
+                    appointmentCtrl.setSelectedType(value as String?);
+                  },
                 ),
 
                 // Appointment Date
@@ -177,7 +138,12 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                   hintText: 'YYYY-MM-DD',
                   controller: appointmentCtrl.appointmentDateController,
                   readOnly: true,
-                  onTap: _selectDate,
+                  onTap:
+                      () => _selectDate(
+                        onPicked: (date) {
+                          appointmentCtrl.formatAppointmentDate(date!);
+                        },
+                      ),
                   suffixIcon: const Icon(Icons.calendar_today),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -193,7 +159,12 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                   hintText: 'HH:MM',
                   controller: appointmentCtrl.appointmentTimeController,
                   readOnly: true,
-                  onTap: _selectTime,
+                  onTap:
+                      () => _selectTime(
+                        onPicked: (time) {
+                          appointmentCtrl.formatAppointmentTime(time!);
+                        },
+                      ),
                   suffixIcon: const Icon(Icons.access_time),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -204,37 +175,14 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                 ),
 
                 // Status
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    MoodText.text(
-                      text: 'Status *',
-                      context: context,
-                      textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                        borderRadius: AppSpacings.borderRadiusk20All,
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: state.selectedStatus,
-                          hint: const Text('Select status'),
-                          isExpanded: true,
-                          items:
-                              ['Proposed', 'Pending', 'Booked', 'Arrived', 'Fulfilled', 'Cancelled'].map((status) {
-                                return DropdownMenuItem(value: status, child: Text(status));
-                              }).toList(),
-                          onChanged: (value) {
-                            appointmentCtrl.setSelectedStatus(value);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                AppDropDownWidget(
+                  value: appointmentState.selectedStatus,
+                  hintText: 'Select status',
+                  labelText: 'Status *',
+                  items: ['Proposed', 'Pending', 'Booked', 'Arrived', 'Fulfilled', 'Cancelled'],
+                  onChanged: (value) {
+                    appointmentCtrl.setSelectedStatus(value as String?);
+                  },
                 ),
 
                 // Reason for Visit
@@ -244,6 +192,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                   textCapitalization: TextCapitalization.sentences,
                   maxLines: 2,
                   controller: appointmentCtrl.reasonController,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.description),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -259,6 +208,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                   hintText: 'Enter appointment location',
                   controller: appointmentCtrl.locationController,
                   textCapitalization: TextCapitalization.words,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.location_on),
                 ),
 
@@ -268,6 +218,7 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
                   hintText: 'Enter any additional notes',
                   controller: appointmentCtrl.notesController,
                   textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: [],
                   maxLines: 3,
                   prefixIcon: const Icon(Icons.notes),
                 ),
@@ -276,9 +227,12 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
 
                 // Submit Button
                 MoodPrimaryButton(
-                  title: 'Schedule Appointment',
-                  onPressed: _submitForm,
-                  state: _submitState,
+                  title: isEdit ? 'Update Appointment' : 'Schedule Appointment',
+                  onPressed:
+                      appointmentState.isLoading
+                          ? null
+                          : () => isEdit ? editForm(appointmentCtrl) : submitForm(appointmentCtrl),
+                  state: appointmentState.isLoading ? ButtonState.loading : ButtonState.loaded,
                   bGcolor: const Color(0xff9C27B0),
                 ),
 
@@ -291,6 +245,49 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
           ),
         ),
       ),
+    );
+  }
+
+  void submitForm(AppointmentsNotifier appointmentCtrl) {
+    appointmentCtrl.submitAppointmentForm(
+      onTypeValidationFailed: () {
+        context.showSnackBar(message: 'Please select an appointment type', isError: true);
+      },
+      onStatusValidationFailed: () {
+        context.showSnackBar(message: 'Please select a clinical status', isError: true);
+      },
+      onPatientNotFound: () {
+        context.showSnackBar(message: 'Patient ID not found. Please create the patient first.', isError: true);
+      },
+      onSuccess: () {
+        Navigator.of(context).pop();
+        context.showSnackBar(message: 'Appointment recorded successfully');
+      },
+      onError: () {
+        context.showSnackBar(message: 'Failed to record appointment. Please try again.', isError: true);
+      },
+    );
+  }
+
+  void editForm(AppointmentsNotifier appointmentCtrl) {
+    appointmentCtrl.editAppointmentForm(
+      existingAppointment: widget.appointment!,
+      onTypeValidationFailed: () {
+        context.showSnackBar(message: 'Please select an appointment type', isError: true);
+      },
+      onStatusValidationFailed: () {
+        context.showSnackBar(message: 'Please select a clinical status', isError: true);
+      },
+      onPatientNotFound: () {
+        context.showSnackBar(message: 'Patient ID not found. Please create the patient first.', isError: true);
+      },
+      onSuccess: () {
+        Navigator.of(context).pop();
+        context.showSnackBar(message: 'Appointment updated successfully');
+      },
+      onError: () {
+        context.showSnackBar(message: 'Failed to update appointment. Please try again.', isError: true);
+      },
     );
   }
 }

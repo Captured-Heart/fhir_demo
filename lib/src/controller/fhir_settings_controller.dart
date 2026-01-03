@@ -12,20 +12,23 @@ final fhirSettingsProvider = NotifierProvider.autoDispose<FhirSettingsNotifier, 
 
 /// State notifier for managing FHIR settings
 class FhirSettingsNotifier extends AutoDisposeNotifier<FhirSettingsEntity> {
-  late TextEditingController _serverUrlController;
-  late TextEditingController _apiKeyController;
+  final TextEditingController _serverUrlController = TextEditingController();
+  final TextEditingController _apiKeyController = TextEditingController();
+  FocusNode _serverUrlFocusNode = FocusNode();
 
   @override
   FhirSettingsEntity build() {
-    _serverUrlController = TextEditingController();
-    _apiKeyController = TextEditingController();
+    final defaultState = FhirSettingsEntity(serverBaseUrl: FhirServerType.hapi.baseUrl);
+    // Load saved settings asynchronously
     _loadSettings();
-    return state;
+
+    return defaultState;
   }
 
   // ------ GETTERS ------
   TextEditingController get serverUrlController => _serverUrlController;
   TextEditingController get apiKeyController => _apiKeyController;
+  FocusNode get serverUrlFocusNode => _serverUrlFocusNode;
 
   static const String _settingsKey = 'fhir_settings';
 
@@ -38,7 +41,7 @@ class FhirSettingsNotifier extends AutoDisposeNotifier<FhirSettingsEntity> {
       if (settingsJson != null && settingsJson.isNotEmpty) {
         final Map<String, dynamic> decoded = jsonDecode(settingsJson);
         state = FhirSettingsEntity.fromJson(decoded);
-        _serverUrlController.text = state.serverBaseUrl;
+        _serverUrlController.text = state.customServerBaseUrl ?? state.serverBaseUrl;
         _apiKeyController.text = state.apiKey;
       }
     } catch (e) {
@@ -51,6 +54,7 @@ class FhirSettingsNotifier extends AutoDisposeNotifier<FhirSettingsEntity> {
   Future<void> updateServerUrl(String url) async {
     state = state.copyWith(serverBaseUrl: url);
     await _saveSettings();
+    _serverUrlFocusNode.unfocus();
   }
 
   /// Update API key
@@ -75,7 +79,11 @@ class FhirSettingsNotifier extends AutoDisposeNotifier<FhirSettingsEntity> {
   Future<bool> updateServerType(FhirServerType serverType) async {
     try {
       print('[FHIR Settings] Updating server type to: ${serverType.name} with URL: ${serverType.baseUrl}');
-      _serverUrlController.text = serverType.baseUrl;
+      if (serverType == FhirServerType.custom) {
+        _serverUrlController.text = serverType.baseUrl;
+        _serverUrlFocusNode.requestFocus();
+        _serverUrlController.text = 'https://';
+      }
       state = state.copyWith(serverType: serverType.name, serverBaseUrl: serverType.baseUrl);
       await _saveSettings();
       print('[FHIR Settings] Server type updated. New state: ${state.serverBaseUrl}');
@@ -89,9 +97,9 @@ class FhirSettingsNotifier extends AutoDisposeNotifier<FhirSettingsEntity> {
 
   /// Reset to default HAPI settings
   Future<void> resetToDefaults() async {
-    state = FhirSettingsEntity(serverBaseUrl: 'https://hapi.fhir.org/baseR4');
+    state = FhirSettingsEntity(serverBaseUrl: FhirServerType.hapi.baseUrl);
     _apiKeyController.clear();
-    _serverUrlController.text = state.serverBaseUrl;
+    _serverUrlController.text = state.customServerBaseUrl ?? '';
     await _saveSettings();
   }
 

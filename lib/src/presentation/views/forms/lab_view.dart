@@ -1,43 +1,51 @@
 import 'package:fhir_demo/src/controller/lab_results_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/src/presentation/widgets/textfield/app_drop_down.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
+import 'package:fhir_demo/utils/validations.dart';
+import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/button_state.dart';
 import 'package:fhir_demo/constants/extension.dart';
-import 'package:fhir_demo/constants/spacings.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/primary_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 
-class LabResultsView extends ConsumerStatefulWidget {
-  const LabResultsView({super.key});
+class LabView extends ConsumerStatefulWidget {
+  const LabView({super.key, this.labResult});
+  final DiagnosticReport? labResult;
 
   @override
-  ConsumerState<LabResultsView> createState() => _LabResultsViewState();
+  ConsumerState<LabView> createState() => _LabViewState();
 }
 
-class _LabResultsViewState extends ConsumerState<LabResultsView> {
+class _LabViewState extends ConsumerState<LabView> {
+  bool get isEdit => widget.labResult != null;
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => showInstructionDialog(
-        context: context,
-        title: 'Lab Results',
-        subtitle: 'Fill out the form to record new Lab Results in the system. ',
-        sharedKeys: SharedKeys.laboratoryInstructionDontShowAgain,
-      ),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isEdit && widget.labResult != null) {
+        ref.read(labResultsController.notifier).populateFormForEdit(widget.labResult!);
+      }
+      if (!isEdit) {
+        showInstructionDialog(
+          context: context,
+          title: 'Lab Results',
+          subtitle: 'Fill out the form to record new Lab Results in the system. ',
+          sharedKeys: SharedKeys.laboratoryInstructionDontShowAgain,
+        );
+      }
+    });
   }
 
-  ButtonState _submitState = ButtonState.initial;
-
-  Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
+  Future<void> _selectDate({required Function(DateTime) onPicked}) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -45,26 +53,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      onPicked?.call(picked);
-    }
-  }
-
-  Future<void> _submitForm() async {
-    final labResultsCtrl = ref.read(labResultsController.notifier);
-    if (labResultsCtrl.formKey.currentState!.validate()) {
-      setState(() => _submitState = ButtonState.loading);
-
-      // TODO: Implement FHIR lab result submission
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() => _submitState = ButtonState.initial);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lab result recorded successfully!'), backgroundColor: Colors.green),
-        );
-        Navigator.pop(context);
-      }
+      onPicked.call(picked);
     }
   }
 
@@ -102,17 +91,10 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 ),
 
                 // Patient ID
-                MoodTextfield(
-                  labelText: 'Patient ID *',
-                  hintText: 'Enter patient identifier',
-                  controller: labResultsCtrl.patientIdController,
-                  prefixIcon: const Icon(Icons.person),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter patient ID';
-                    }
-                    return null;
-                  },
+                PatientIdDropdown(
+                  onChanged: (value) => labResultsCtrl.setSelectedPatientId(value),
+                  isEdit: isEdit,
+                  patientIdController: labResultsCtrl.patientIdController,
                 ),
 
                 // Test Name
@@ -121,6 +103,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   hintText: 'e.g., Complete Blood Count',
                   controller: labResultsCtrl.testNameController,
                   textCapitalization: TextCapitalization.words,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.science),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -135,6 +118,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   labelText: 'Test Code',
                   hintText: 'e.g., CBC-001',
                   controller: labResultsCtrl.testCodeController,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.qr_code),
                 ),
 
@@ -144,7 +128,12 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   hintText: 'YYYY-MM-DD',
                   controller: labResultsCtrl.testDateController,
                   readOnly: true,
-                  onTap: _selectDate,
+                  onTap:
+                      () => _selectDate(
+                        onPicked: (pickedDate) {
+                          labResultsCtrl.formatTestDate(pickedDate);
+                        },
+                      ),
                   suffixIcon: const Icon(Icons.calendar_today),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -157,16 +146,11 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 // Result Value
                 MoodTextfield(
                   labelText: 'Result Value *',
-                  hintText: 'Enter test result',
+                  hintText: 'Enter test result (Number)',
                   controller: labResultsCtrl.resultValueController,
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   prefixIcon: const Icon(Icons.analytics),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter result value';
-                    }
-                    return null;
-                  },
+                  validator: (value) => AppValidations.validateNumberOnly(value),
                 ),
 
                 // Unit
@@ -174,6 +158,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   labelText: 'Unit *',
                   hintText: 'e.g., mg/dL, mmol/L',
                   controller: labResultsCtrl.unitController,
+                  inputFormatters: [],
                   prefixIcon: const Icon(Icons.straighten),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -192,71 +177,21 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                 ),
 
                 // Interpretation
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    MoodText.text(
-                      text: 'Interpretation',
-                      context: context,
-                      textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                        borderRadius: AppSpacings.borderRadiusk20All,
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: labResultState.selectedInterpretation,
-                          hint: const Text('Select interpretation'),
-                          isExpanded: true,
-                          items:
-                              ['Normal', 'High', 'Low', 'Critical', 'Abnormal'].map((interpretation) {
-                                return DropdownMenuItem(value: interpretation, child: Text(interpretation));
-                              }).toList(),
-                          onChanged: (value) {
-                            labResultsCtrl.setSelectedInterpretation(value);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                AppDropDownWidget(
+                  value: labResultState.selectedInterpretation,
+                  labelText: 'Interpretation',
+                  hintText: 'Select interpretation',
+                  items: ['Normal', 'High', 'Low', 'Critical', 'Abnormal'],
+                  onChanged: (value) => labResultsCtrl.setSelectedInterpretation(value as String?),
                 ),
 
                 // Status
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    MoodText.text(
-                      text: 'Status *',
-                      context: context,
-                      textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                        borderRadius: AppSpacings.borderRadiusk20All,
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: labResultState.selectedStatus,
-                          hint: const Text('Select status'),
-                          isExpanded: true,
-                          items:
-                              ['Registered', 'Partial', 'Preliminary', 'Final', 'Amended', 'Corrected', 'Cancelled'].map((status) {
-                                return DropdownMenuItem(value: status, child: Text(status));
-                              }).toList(),
-                          onChanged: (value) {
-                            labResultsCtrl.setSelectedStatus(value);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                AppDropDownWidget(
+                  value: labResultState.selectedStatus,
+                  labelText: 'Status *',
+                  hintText: 'Select status',
+                  items: ['Registered', 'Partial', 'Preliminary', 'Final', 'Amended', 'Corrected', 'Cancelled'],
+                  onChanged: (value) => labResultsCtrl.setSelectedStatus(value as String?),
                 ),
 
                 // Specimen Type
@@ -264,6 +199,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   labelText: 'Specimen Type',
                   hintText: 'e.g., Blood, Urine',
                   controller: labResultsCtrl.specimenController,
+                  inputFormatters: [],
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.biotech),
                 ),
@@ -273,6 +209,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   labelText: 'Performer/Laboratory',
                   hintText: 'Enter lab or performer name',
                   controller: labResultsCtrl.performerController,
+                  inputFormatters: [],
                   textCapitalization: TextCapitalization.words,
                   prefixIcon: const Icon(Icons.business),
                 ),
@@ -282,6 +219,7 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
                   labelText: 'Clinical Notes',
                   hintText: 'Enter additional notes',
                   controller: labResultsCtrl.notesController,
+                  inputFormatters: [],
                   textCapitalization: TextCapitalization.sentences,
                   maxLines: 3,
                   prefixIcon: const Icon(Icons.notes),
@@ -291,9 +229,18 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
 
                 // Submit Button
                 MoodPrimaryButton(
-                  title: 'Record Lab Result',
-                  onPressed: _submitForm,
-                  state: _submitState,
+                  title: isEdit ? 'Update Lab Result' : 'Record Lab Result',
+                  onPressed:
+                      labResultState.isLoading
+                          ? null
+                          : () {
+                            if (!isEdit) {
+                              submitLabResultForm(labResultsCtrl);
+                            } else {
+                              editLabResultForm(labResultsCtrl);
+                            }
+                          },
+                  state: labResultState.isLoading ? ButtonState.loading : ButtonState.loaded,
                   bGcolor: const Color(0xff00BCD4),
                 ),
 
@@ -306,6 +253,49 @@ class _LabResultsViewState extends ConsumerState<LabResultsView> {
           ),
         ),
       ),
+    );
+  }
+
+  void submitLabResultForm(LabResultsNotifier labResultsCtrl) {
+    labResultsCtrl.submitLabResultForm(
+      onInterpretationValidationFailed: () {
+        context.showSnackBar(message: 'Please select an interpretation', isError: true);
+      },
+      onStatusValidationFailed: () {
+        context.showSnackBar(message: 'Please select a clinical status', isError: true);
+      },
+      onPatientNotFound: () {
+        context.showSnackBar(message: 'Patient ID not found. Please create the patient first.', isError: true);
+      },
+      onSuccess: () {
+        Navigator.of(context).pop();
+        context.showSnackBar(message: 'Diagnosis recorded successfully');
+      },
+      onError: () {
+        context.showSnackBar(message: 'Failed to record diagnosis. Please try again.', isError: true);
+      },
+    );
+  }
+
+  void editLabResultForm(LabResultsNotifier labResultsCtrl) {
+    labResultsCtrl.editLabResultForm(
+      existingLabResult: widget.labResult!,
+      onInterpretationValidationFailed: () {
+        context.showSnackBar(message: 'Please select an interpretation', isError: true);
+      },
+      onStatusValidationFailed: () {
+        context.showSnackBar(message: 'Please select a clinical status', isError: true);
+      },
+      onPatientNotFound: () {
+        context.showSnackBar(message: 'Patient ID not found. Please create the patient first.', isError: true);
+      },
+      onSuccess: () {
+        Navigator.of(context).pop();
+        context.showSnackBar(message: 'Lab result updated successfully');
+      },
+      onError: () {
+        context.showSnackBar(message: 'Failed to update lab result. Please try again.', isError: true);
+      },
     );
   }
 }

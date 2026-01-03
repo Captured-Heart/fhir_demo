@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:fhir_demo/constants/api_constants.dart';
 import 'package:fhir_demo/constants/api_url.dart';
 import 'package:fhir_demo/src/domain/entities/api_response.dart';
-import 'package:fhir_demo/src/domain/entities/project_diagosis_entity.dart';
+import 'package:fhir_demo/src/domain/entities/project_diagnosis_entity.dart';
 import 'package:fhir_demo/src/domain/repository/network/network_calls_repository.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -77,7 +77,6 @@ class DiagnosisRepositoryImpl implements DiagnosisRepository {
         '${ApiUrl.fhirDiagnosticReport.url}/${existingDiagnosis.id}',
         data: diagnosisData.addDiagnosis(existingDiagnosis: existingDiagnosis),
       );
-      inspect(response);
       if (response.isSuccess) {
         return ApiResponse.success(response);
       } else {

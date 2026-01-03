@@ -16,8 +16,11 @@ final prescriptionRepositoryProvider = Provider<PrescriptionRepository>((ref) {
 abstract class PrescriptionRepository {
   Future<ApiResponse> createPrescription(ProjectPrescriptionEntity prescriptionData);
   Future<Map<String, dynamic>?> getPrescriptionById(String prescriptionId);
-  Future<ApiResponse<List<MedicationRequest>>> getAllDiagnosesByIdentifier();
-  Future<Map<String, dynamic>?> editPrescriptionById(String prescriptionId);
+  Future<ApiResponse<List<MedicationRequest>>> getAllPrescriptionByIdentifier();
+  Future<ApiResponse> editPrescriptionById({
+    required MedicationRequest existingPrescription,
+    required ProjectPrescriptionEntity updatedPrescriptionData,
+  });
   Future<bool> deletePrescriptionById(String prescriptionId);
   Future<List<Map<String, dynamic>>> searchDiagnoses();
 }
@@ -65,9 +68,27 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> editPrescriptionById(String prescriptionId) async {
-    // TODO: implement editPrescriptionById
-    throw UnimplementedError();
+  Future<ApiResponse> editPrescriptionById({
+    required MedicationRequest existingPrescription,
+    required ProjectPrescriptionEntity updatedPrescriptionData,
+  }) async {
+    try {
+      final response = await networkCallsRepository.put(
+        '${ApiUrl.fhirPrescription.url}/${existingPrescription.id}',
+        data: updatedPrescriptionData.addPrescription(existingPrescription: existingPrescription),
+      );
+      if (response.isSuccess) {
+        return ApiResponse.success(response);
+      } else {
+        return ApiResponse.error(
+          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      log('Error in createPatient: $e');
+      return ApiResponse.error(e.toString());
+    }
   }
 
   @override
@@ -83,7 +104,7 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
   }
 
   @override
-  Future<ApiResponse<List<MedicationRequest>>> getAllDiagnosesByIdentifier() async {
+  Future<ApiResponse<List<MedicationRequest>>> getAllPrescriptionByIdentifier() async {
     try {
       final response = await networkCallsRepository.get(
         ApiUrl.fhirPrescription.url,

@@ -1,5 +1,7 @@
+import 'package:fhir_demo/constants/app_images.dart';
 import 'package:fhir_demo/constants/button_state.dart';
 import 'package:fhir_demo/constants/fhir_server_type_enum.dart';
+import 'package:fhir_demo/hive_helper/cache_helper.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/primary_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/custom_screen_header.dart';
@@ -85,6 +87,24 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: 24,
                   children: [
+                    Column(
+                      spacing: 4,
+                      children: [
+                        Image.asset(AppImages.noImageAvatar.pngPath, height: 100, width: 100, fit: BoxFit.cover),
+
+                        MoodText.text(
+                          context: context,
+                          text: CacheHelper.currentUser?.name ?? '',
+                          textStyle: context.textTheme.titleMedium,
+                        ),
+
+                        MoodText.text(
+                          context: context,
+                          text: CacheHelper.currentUser?.email ?? '',
+                          textStyle: context.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
                     // Server Type Section
                     BuildSettingsSection(
                       title: 'Server Type',
@@ -116,78 +136,80 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     ),
 
                     // Server URL Section
-                    BuildSettingsSection(
-                      title: 'Add Custom Server Base URL',
-                      child: MoodTextfield(
-                        controller: settingsCtrl.serverUrlController,
-                        hintText: settingState.serverBaseUrl,
-                        prefixIcon: const Icon(Icons.link),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.save),
-                          onPressed: () {
-                            settingsCtrl.updateServerUrl(settingsCtrl.serverUrlController.text);
-                            context.showSnackBar(message: 'Server URL updated');
-                          },
+                    if (settingState.serverType == FhirServerType.custom.name)
+                      BuildSettingsSection(
+                        title: 'Add Custom Server Base URL',
+                        child: MoodTextfield(
+                          controller: settingsCtrl.serverUrlController,
+                          hintText: settingState.serverBaseUrl,
+                          focusNode: settingsCtrl.serverUrlFocusNode,
+                          prefixIcon: const Icon(Icons.link),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.save),
+                            onPressed: () {
+                              settingsCtrl.updateServerUrl(settingsCtrl.serverUrlController.text);
+                              context.showSnackBar(message: 'Server URL updated');
+                            },
+                          ),
+                          keyboardType: TextInputType.url,
                         ),
-                        keyboardType: TextInputType.url,
                       ),
-                    ),
 
                     // Authentication Section
-                    BuildSettingsSection(
-                      title: 'Authentication',
-                      child: Column(
-                        spacing: 12,
-                        children: [
-                          SwitchListTile(
-                            title: const Text('Use Authentication'),
-                            subtitle: const Text('Enable API key authentication'),
-                            value: settingState.useAuthentication,
-                            onChanged: (value) {
-                              settingsCtrl.toggleAuthentication(value);
-                            },
-                            shape: RoundedRectangleBorder(
-                              borderRadius: AppSpacings.borderRadiusk20All,
-                              side: BorderSide(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                            ),
-                          ),
-                          if (settingState.useAuthentication)
-                            TextField(
-                              controller: settingsCtrl.apiKeyController,
-                              decoration: InputDecoration(
-                                hintText: 'Enter API Key',
-                                border: OutlineInputBorder(borderRadius: AppSpacings.borderRadiusk20All),
-                                prefixIcon: const Icon(Icons.key),
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.save),
-                                  onPressed: () {
-                                    settingsCtrl.updateApiKey();
-                                    context.showSnackBar(message: 'API key updated');
-                                  },
-                                ),
-                              ),
-                              obscureText: true,
-                            ),
-                        ],
-                      ),
-                    ),
+                    // BuildSettingsSection(
+                    //   title: 'Authentication',
+                    //   child: Column(
+                    //     spacing: 12,
+                    //     children: [
+                    //       SwitchListTile(
+                    //         title: const Text('Use Authentication'),
+                    //         subtitle: const Text('Enable API key authentication'),
+                    //         value: settingState.useAuthentication,
+                    //         onChanged: (value) {
+                    //           settingsCtrl.toggleAuthentication(value);
+                    //         },
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: AppSpacings.borderRadiusk20All,
+                    //           side: BorderSide(color: AppColors.kGrey.withValues(alpha: 0.3)),
+                    //         ),
+                    //       ),
+                    //       if (settingState.useAuthentication)
+                    //         TextField(
+                    //           controller: settingsCtrl.apiKeyController,
+                    //           decoration: InputDecoration(
+                    //             hintText: 'Enter API Key',
+                    //             border: OutlineInputBorder(borderRadius: AppSpacings.borderRadiusk20All),
+                    //             prefixIcon: const Icon(Icons.key),
+                    //             suffixIcon: IconButton(
+                    //               icon: const Icon(Icons.save),
+                    //               onPressed: () {
+                    //                 settingsCtrl.updateApiKey();
+                    //                 context.showSnackBar(message: 'API key updated');
+                    //               },
+                    //             ),
+                    //           ),
+                    //           obscureText: true,
+                    //         ),
+                    //     ],
+                    //   ),
+                    // ),
 
                     // Action Buttons Section
-                    Column(
-                      spacing: 12,
-                      children: [
-                        // Test Connection Button
-                        MoodPrimaryButton(
-                          onPressed: _isTestingConnection ? null : _testConnection,
-                          state: _isTestingConnection ? ButtonState.loading : ButtonState.loaded,
-                          icon: const Icon(Icons.wifi_tethering, color: AppColors.kWhite),
-                          title: 'Test Connection',
-                        ),
+                    // Column(
+                    //   spacing: 12,
+                    //   children: [
+                    //     // Test Connection Button
+                    //     MoodPrimaryButton(
+                    //       onPressed: _isTestingConnection ? null : _testConnection,
+                    //       state: _isTestingConnection ? ButtonState.loading : ButtonState.loaded,
+                    //       icon: const Icon(Icons.wifi_tethering, color: AppColors.kWhite),
+                    //       title: 'Test Connection',
+                    //     ),
 
-                        // Reset to Defaults Button
+                    //     // Reset to Defaults Button
                         MoodOutlineButton(onPressed: () => _resetDialog(settingsCtrl), title: 'Reset to Defaults'),
-                      ],
-                    ),
+                    //   ],
+                    // ),
 
                     // Info Card
                     SettingsServerInfoCard(),
