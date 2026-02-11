@@ -55,6 +55,17 @@ class AppointmentsNotifier extends AutoDisposeNotifier<AppointmentsNotifierState
     state = state.copyWith(selectedType: null, selectedStatus: null);
   }
 
+  ProjectAppointmentEntity get currentFormData => ProjectAppointmentEntity(
+    patientId: state.patientId?.removeCharactersFromPatientId ?? '',
+    doctor: _doctorController.text,
+    appointmentType: state.selectedType!,
+    appointmentDate: DateTime.parse(_appointmentDateController.text),
+    appointmentTime: _appointmentTimeController.text,
+    status: state.selectedStatus!,
+    reasonForVisit: _reasonController.text,
+    location: _locationController.text,
+    notes: _notesController.text,
+  );
   void setSelectedType(String? type) {
     state = state.copyWith(selectedType: type);
   }
@@ -205,19 +216,7 @@ class AppointmentsNotifier extends AutoDisposeNotifier<AppointmentsNotifierState
           return;
         }
 
-        final result = await _appointmentRepository.createAppointment(
-          ProjectAppointmentEntity(
-            patientId: patientId,
-            doctor: _doctorController.text,
-            appointmentType: state.selectedType!,
-            appointmentDate: DateTime.parse(_appointmentDateController.text),
-            appointmentTime: _appointmentTimeController.text,
-            status: state.selectedStatus!,
-            reasonForVisit: _reasonController.text,
-            location: _locationController.text,
-            notes: _notesController.text,
-          ),
-        );
+        final result = await _appointmentRepository.createAppointment(currentFormData);
 
         if (result.isSuccess) {
           log('it was successful');

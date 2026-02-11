@@ -2,6 +2,7 @@ import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/src/controller/appointments_controller.dart';
 import 'package:fhir_demo/src/domain/models/medical_forms_data.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/detail_row_results.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/no_records_found.dart';
@@ -42,7 +43,7 @@ class _AppointmentResultDetailViewState extends ConsumerState<AppointmentResultD
     final appointmentState = ref.watch(appointmentsController);
     final appointmentCtrl = ref.read(appointmentsController.notifier);
 
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: Text('${widget.categoryTitle} Records'),
         backgroundColor: widget.categoryColor,

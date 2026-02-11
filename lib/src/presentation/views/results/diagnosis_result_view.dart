@@ -1,7 +1,9 @@
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/diagnosis_controller.dart';
 import 'package:fhir_demo/src/domain/models/medical_forms_data.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/detail_row_results.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/no_records_found.dart';
@@ -41,7 +43,8 @@ class _DiagnosisResultDetailViewState extends ConsumerState<DiagnosisResultDetai
     'what is categoryTitle: ${widget.categoryTitle}'.logError();
     final diagnosisState = ref.watch(diagnosisController);
     final diagnosisCtrl = ref.read(diagnosisController.notifier);
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       appBar: AppBar(
         title: Text('${widget.categoryTitle} Records'),
         backgroundColor: widget.categoryColor,

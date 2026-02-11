@@ -1,9 +1,14 @@
+import 'package:fhir_demo/constants/common_methods.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/appointments_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/forms_schema_preview_widget.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_drop_down.dart';
+import 'package:fhir_demo/src/presentation/widgets/view_schema_widget.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +35,8 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupTextFieldListeners();
+
       if (isEdit && widget.appointment != null) {
         ref.read(appointmentsController.notifier).populateFormForEdit(widget.appointment!);
       }
@@ -68,181 +75,213 @@ class _AppointmentsViewState extends ConsumerState<AppointmentsView> {
     ref.read(appointmentsController.notifier).clearForm();
   }
 
+  void _setupTextFieldListeners() {
+    final appointmentCtrl = ref.read(appointmentsController.notifier);
+    appointmentCtrl.doctorController.addListener(() => setState(() {}));
+    appointmentCtrl.reasonController.addListener(() => setState(() {}));
+    appointmentCtrl.locationController.addListener(() => setState(() {}));
+    appointmentCtrl.notesController.addListener(() => setState(() {}));
+  }
+
   @override
   Widget build(BuildContext context) {
     final appointmentCtrl = ref.watch(appointmentsController.notifier);
     final appointmentState = ref.watch(appointmentsController);
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isComputerOrLarger,
       appBar: AppBar(
         title: const Text('Schedule Appointment'),
         backgroundColor: const Color(0xff9C27B0),
         foregroundColor: AppColors.kWhite,
-        actions: [AppBarServerSwitch()],
+        actionsPadding: EdgeInsets.symmetric(horizontal: context.isMobileDevice ? 0 : 12),
+        actions: [
+          AppBarServerSwitch(),
+          const SizedBox(width: 12),
+          ViewSchemaWidget(
+            jsonSchema: CommonMethods.buildJsonPreview(appointmentCtrl.currentFormData.addAppointment()),
+            entityName: 'AppointmentProjectEntity',
+          ),
+        ],
       ),
       body: SafeArea(
-        child: Form(
-          key: appointmentCtrl.formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                SelectedServerText(),
-                // Header
-                MoodText.text(
-                  text: 'Appointment Details',
-                  context: context,
-                  textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Form(
+                key: appointmentCtrl.formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 20,
+                    children: [
+                      SelectedServerText(),
+                      // Header
+                      MoodText.text(
+                        text: 'Appointment Details',
+                        context: context,
+                        textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
 
-                // Patient ID
-                PatientIdDropdown(
-                  onChanged: (patientId) {
-                    appointmentCtrl.updatePatientId(patientId);
-                  },
-                  isEdit: isEdit,
-                  patientIdController: appointmentCtrl.patientIdController,
-                ),
+                      // Patient ID
+                      PatientIdDropdown(
+                        onChanged: (patientId) {
+                          appointmentCtrl.updatePatientId(patientId);
+                        },
+                        isEdit: isEdit,
+                        patientIdController: appointmentCtrl.patientIdController,
+                      ),
 
-                // Doctor/Practitioner
-                MoodTextfield(
-                  labelText: 'Doctor/Practitioner *',
-                  hintText: 'Enter doctor name',
-                  controller: appointmentCtrl.doctorController,
-                  inputFormatters: [],
-                  textCapitalization: TextCapitalization.words,
-                  prefixIcon: const Icon(Icons.local_hospital),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter doctor name';
-                    }
-                    return null;
-                  },
-                ),
-
-                // Appointment Type
-                AppDropDownWidget(
-                  value: appointmentState.selectedType,
-                  hintText: 'Select type',
-                  labelText: 'Appointment Type *',
-                  items: ['Routine', 'Follow-up', 'Emergency', 'Consultation', 'Check-up'],
-                  onChanged: (value) {
-                    appointmentCtrl.setSelectedType(value as String?);
-                  },
-                ),
-
-                // Appointment Date
-                MoodTextfield(
-                  labelText: 'Appointment Date *',
-                  hintText: 'YYYY-MM-DD',
-                  controller: appointmentCtrl.appointmentDateController,
-                  readOnly: true,
-                  onTap:
-                      () => _selectDate(
-                        onPicked: (date) {
-                          appointmentCtrl.formatAppointmentDate(date!);
+                      // Doctor/Practitioner
+                      MoodTextfield(
+                        labelText: 'Doctor/Practitioner *',
+                        hintText: 'Enter doctor name',
+                        controller: appointmentCtrl.doctorController,
+                        inputFormatters: [],
+                        textCapitalization: TextCapitalization.words,
+                        prefixIcon: const Icon(Icons.local_hospital),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter doctor name';
+                          }
+                          return null;
                         },
                       ),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select appointment date';
-                    }
-                    return null;
-                  },
-                ),
 
-                // Appointment Time
-                MoodTextfield(
-                  labelText: 'Appointment Time *',
-                  hintText: 'HH:MM',
-                  controller: appointmentCtrl.appointmentTimeController,
-                  readOnly: true,
-                  onTap:
-                      () => _selectTime(
-                        onPicked: (time) {
-                          appointmentCtrl.formatAppointmentTime(time!);
+                      // Appointment Type
+                      AppDropDownWidget(
+                        value: appointmentState.selectedType,
+                        hintText: 'Select type',
+                        labelText: 'Appointment Type *',
+                        items: ['Routine', 'Follow-up', 'Emergency', 'Consultation', 'Check-up'],
+                        onChanged: (value) {
+                          appointmentCtrl.setSelectedType(value as String?);
                         },
                       ),
-                  suffixIcon: const Icon(Icons.access_time),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select appointment time';
-                    }
-                    return null;
-                  },
+
+                      // Appointment Date
+                      MoodTextfield(
+                        labelText: 'Appointment Date *',
+                        hintText: 'YYYY-MM-DD',
+                        controller: appointmentCtrl.appointmentDateController,
+                        readOnly: true,
+                        onTap:
+                            () => _selectDate(
+                              onPicked: (date) {
+                                appointmentCtrl.formatAppointmentDate(date!);
+                              },
+                            ),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select appointment date';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Appointment Time
+                      MoodTextfield(
+                        labelText: 'Appointment Time *',
+                        hintText: 'HH:MM',
+                        controller: appointmentCtrl.appointmentTimeController,
+                        readOnly: true,
+                        onTap:
+                            () => _selectTime(
+                              onPicked: (time) {
+                                appointmentCtrl.formatAppointmentTime(time!);
+                              },
+                            ),
+                        suffixIcon: const Icon(Icons.access_time),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select appointment time';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Status
+                      AppDropDownWidget(
+                        value: appointmentState.selectedStatus,
+                        hintText: 'Select status',
+                        labelText: 'Status *',
+                        items: ['Proposed', 'Pending', 'Booked', 'Arrived', 'Fulfilled', 'Cancelled'],
+                        onChanged: (value) {
+                          appointmentCtrl.setSelectedStatus(value as String?);
+                        },
+                      ),
+
+                      // Reason for Visit
+                      MoodTextfield(
+                        labelText: 'Reason for Visit *',
+                        hintText: 'Enter reason for appointment',
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 2,
+                        controller: appointmentCtrl.reasonController,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.description),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter reason for visit';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Location
+                      MoodTextfield(
+                        labelText: 'Location',
+                        hintText: 'Enter appointment location',
+                        controller: appointmentCtrl.locationController,
+                        textCapitalization: TextCapitalization.words,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.location_on),
+                      ),
+
+                      // Additional Notes
+                      MoodTextfield(
+                        labelText: 'Additional Notes',
+                        hintText: 'Enter any additional notes',
+                        controller: appointmentCtrl.notesController,
+                        textCapitalization: TextCapitalization.sentences,
+                        inputFormatters: [],
+                        maxLines: 3,
+                        prefixIcon: const Icon(Icons.notes),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Submit Button
+                      MoodPrimaryButton(
+                        title: isEdit ? 'Update Appointment' : 'Schedule Appointment',
+                        onPressed:
+                            appointmentState.isLoading
+                                ? null
+                                : () => isEdit ? editForm(appointmentCtrl) : submitForm(appointmentCtrl),
+                        state: appointmentState.isLoading ? ButtonState.loading : ButtonState.loaded,
+                        bGcolor: const Color(0xff9C27B0),
+                      ),
+
+                      // Clear Button
+                      MoodOutlineButton(title: 'Clear Form', onPressed: _clearForm, color: AppColors.kGrey),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-
-                // Status
-                AppDropDownWidget(
-                  value: appointmentState.selectedStatus,
-                  hintText: 'Select status',
-                  labelText: 'Status *',
-                  items: ['Proposed', 'Pending', 'Booked', 'Arrived', 'Fulfilled', 'Cancelled'],
-                  onChanged: (value) {
-                    appointmentCtrl.setSelectedStatus(value as String?);
-                  },
-                ),
-
-                // Reason for Visit
-                MoodTextfield(
-                  labelText: 'Reason for Visit *',
-                  hintText: 'Enter reason for appointment',
-                  textCapitalization: TextCapitalization.sentences,
-                  maxLines: 2,
-                  controller: appointmentCtrl.reasonController,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.description),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter reason for visit';
-                    }
-                    return null;
-                  },
-                ),
-
-                // Location
-                MoodTextfield(
-                  labelText: 'Location',
-                  hintText: 'Enter appointment location',
-                  controller: appointmentCtrl.locationController,
-                  textCapitalization: TextCapitalization.words,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.location_on),
-                ),
-
-                // Additional Notes
-                MoodTextfield(
-                  labelText: 'Additional Notes',
-                  hintText: 'Enter any additional notes',
-                  controller: appointmentCtrl.notesController,
-                  textCapitalization: TextCapitalization.sentences,
-                  inputFormatters: [],
-                  maxLines: 3,
-                  prefixIcon: const Icon(Icons.notes),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Submit Button
-                MoodPrimaryButton(
-                  title: isEdit ? 'Update Appointment' : 'Schedule Appointment',
-                  onPressed:
-                      appointmentState.isLoading
-                          ? null
-                          : () => isEdit ? editForm(appointmentCtrl) : submitForm(appointmentCtrl),
-                  state: appointmentState.isLoading ? ButtonState.loading : ButtonState.loaded,
-                  bGcolor: const Color(0xff9C27B0),
-                ),
-
-                // Clear Button
-                MoodOutlineButton(title: 'Clear Form', onPressed: _clearForm, color: AppColors.kGrey),
-
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
+            if (context.isComputerOrLarger)
+              Flexible(
+                flex: 2,
+                child: FormSchemaJsonPreviewWidget(
+                  jsonSchema: CommonMethods.buildJsonPreview(appointmentCtrl.currentFormData.addAppointment()),
+                  entityName: 'AppointmentProjectEntity',
+                ),
+              ),
+          ],
         ),
       ),
     );

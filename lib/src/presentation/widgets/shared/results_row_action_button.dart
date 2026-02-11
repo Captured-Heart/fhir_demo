@@ -1,5 +1,6 @@
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +19,7 @@ class ResultActionsRowButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: context.isTabletOrLarger ? MainAxisAlignment.spaceAround : MainAxisAlignment.spaceBetween,
       spacing: 12,
       children: [
         MoodText.text(

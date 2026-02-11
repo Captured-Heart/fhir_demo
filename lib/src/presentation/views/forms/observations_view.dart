@@ -1,5 +1,7 @@
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/observations_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
@@ -71,7 +73,8 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
     final observationCtrl = ref.read(observationsController.notifier);
     final observationState = ref.watch(observationsController);
     // inspect(widget.observation);
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       appBar: AppBar(
         title: const Text('Vital Signs'),
         backgroundColor: const Color(0xffE91E63),

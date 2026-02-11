@@ -1,8 +1,14 @@
+import 'package:fhir_demo/constants/common_methods.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
+import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_demo/src/controller/patient_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/forms_schema_preview_widget.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/src/presentation/widgets/view_schema_widget.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:fhir_demo/utils/validations.dart';
 import 'package:fhir_r4/fhir_r4.dart';
@@ -27,10 +33,13 @@ class RegisterPatientView extends ConsumerStatefulWidget {
 
 class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
   bool get isEdit => widget.patient != null;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupTextFieldListeners();
+
       if (isEdit) {
         ref.read(patientController.notifier).populateFormForEdit(widget.patient!);
         return;
@@ -42,6 +51,18 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
         sharedKeys: SharedKeys.patientInstructionDontShowAgain,
       );
     });
+  }
+
+  void _setupTextFieldListeners() {
+    final patientCtrl = ref.read(patientController.notifier);
+
+    patientCtrl.firstNameController.addListener(() => setState(() {}));
+    patientCtrl.lastNameController.addListener(() => setState(() {}));
+    patientCtrl.dateOfBirthController.addListener(() => setState(() {}));
+    patientCtrl.phoneController.addListener(() => setState(() {}));
+    patientCtrl.emailController.addListener(() => setState(() {}));
+    patientCtrl.addressController.addListener(() => setState(() {}));
+    patientCtrl.emergencyContactController.addListener(() => setState(() {}));
   }
 
   Future<void> _selectDate({Function(DateTime?)? onPicked}) async {
@@ -62,169 +83,197 @@ class _RegisterPatientViewState extends ConsumerState<RegisterPatientView> {
     final patientCtrl = ref.read(patientController.notifier);
     final patientState = ref.watch(patientController);
     //
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isComputerOrLarger,
       appBar: AppBar(
         title: const Text('Register Patient'),
         backgroundColor: const Color(0xff4CAF50),
         foregroundColor: AppColors.kWhite,
-        actions: [AppBarServerSwitch()],
+        actionsPadding: EdgeInsets.symmetric(horizontal: context.isMobileDevice ? 0 : 12),
+        actions: [
+          AppBarServerSwitch(),
+          const SizedBox(width: 12),
+          ViewSchemaWidget(
+            jsonSchema: CommonMethods.buildJsonPreview(patientCtrl.currentFormData.addPatient()),
+            entityName: 'ProjectPatientEntity',
+          ),
+        ],
       ),
       body: SafeArea(
-        child: Form(
-          key: patientCtrl.patientFormKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                SelectedServerText(),
-                // Header
-                MoodText.text(
-                  text: 'Patient Information',
-                  context: context,
-                  textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                if (isEdit)
-                  PatientIdDropdown(
-                    isEdit: isEdit,
-                    onChanged: (value) => patientCtrl.updatePatientId(value),
-                    patientIdController: patientCtrl.patientIdController,
-                  ),
-                // First Name
-                MoodTextfield(
-                  labelText: 'First Name *',
-                  hintText: 'Enter first name',
-                  controller: patientCtrl.firstNameController,
-                  keyboardType: TextInputType.name,
-                  textCapitalization: TextCapitalization.words,
-                  validator: (value) => AppValidations.validatedName(value),
-                ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Form(
+                key: patientCtrl.patientFormKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 20,
+                    children: [
+                      SelectedServerText(),
+                      // Header
+                      MoodText.text(
+                        text: 'Patient Information',
+                        context: context,
+                        textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      if (isEdit)
+                        PatientIdDropdown(
+                          isEdit: isEdit,
+                          onChanged: (value) => patientCtrl.updatePatientId(value),
+                          patientIdController: patientCtrl.patientIdController,
+                        ),
+                      // First Name
+                      MoodTextfield(
+                        labelText: 'First Name *',
+                        hintText: 'Enter first name',
+                        controller: patientCtrl.firstNameController,
+                        keyboardType: TextInputType.name,
+                        textCapitalization: TextCapitalization.words,
+                        validator: (value) => AppValidations.validatedName(value),
+                      ),
 
-                // Last Name
-                MoodTextfield(
-                  labelText: 'Last Name *',
-                  hintText: 'Enter last name',
-                  controller: patientCtrl.lastNameController,
-                  keyboardType: TextInputType.name,
-                  textCapitalization: TextCapitalization.words,
-                  validator: (value) => AppValidations.validatedName(value),
-                ),
+                      // Last Name
+                      MoodTextfield(
+                        labelText: 'Last Name *',
+                        hintText: 'Enter last name',
+                        controller: patientCtrl.lastNameController,
+                        keyboardType: TextInputType.name,
+                        textCapitalization: TextCapitalization.words,
+                        validator: (value) => AppValidations.validatedName(value),
+                      ),
 
-                // Date of Birth
-                MoodTextfield(
-                  labelText: 'Date of Birth *',
-                  hintText: 'YYYY-MM-DD',
-                  controller: patientCtrl.dateOfBirthController,
-                  readOnly: true,
-                  onTap:
-                      () => _selectDate(
-                        onPicked: (selectedDate) {
-                          patientCtrl.formatBirthDate(selectedDate!);
+                      // Date of Birth
+                      MoodTextfield(
+                        labelText: 'Date of Birth *',
+                        hintText: 'YYYY-MM-DD',
+                        controller: patientCtrl.dateOfBirthController,
+                        readOnly: true,
+                        onTap:
+                            () => _selectDate(
+                              onPicked: (selectedDate) {
+                                patientCtrl.formatBirthDate(selectedDate!);
+                              },
+                            ),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select date of birth';
+                          }
+                          return null;
                         },
                       ),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select date of birth';
-                    }
-                    return null;
-                  },
-                ),
 
-                // Gender
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    MoodText.text(
-                      text: 'Gender *',
-                      context: context,
-                      textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
-                        borderRadius: AppSpacings.borderRadiusk20All,
+                      // Gender
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 8,
+                        children: [
+                          MoodText.text(
+                            text: 'Gender *',
+                            context: context,
+                            textStyle: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.kGrey.withValues(alpha: 0.3)),
+                              borderRadius: AppSpacings.borderRadiusk20All,
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: patientState.selectedGender,
+                                hint: const Text('Select gender'),
+                                isExpanded: true,
+                                items:
+                                    ['Male', 'Female'].map((gender) {
+                                      return DropdownMenuItem(value: gender, child: Text(gender));
+                                    }).toList(),
+                                onChanged: (value) {
+                                  patientCtrl.updateGender(value);
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: patientState.selectedGender,
-                          hint: const Text('Select gender'),
-                          isExpanded: true,
-                          items:
-                              ['Male', 'Female'].map((gender) {
-                                return DropdownMenuItem(value: gender, child: Text(gender));
-                              }).toList(),
-                          onChanged: (value) {
-                            patientCtrl.updateGender(value);
-                          },
-                        ),
+
+                      // Phone
+                      MoodTextfield(
+                        labelText: 'Phone Number *',
+                        hintText: 'Enter phone number',
+                        controller: patientCtrl.phoneController,
+                        keyboardType: TextInputType.phone,
+                        prefixIcon: const Icon(Icons.phone),
+                        validator: (value) => AppValidations.validatePhone(value),
                       ),
-                    ),
-                  ],
+
+                      // Email
+                      MoodTextfield(
+                        labelText: 'Email',
+                        hintText: 'Enter email address',
+                        controller: patientCtrl.emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        prefixIcon: const Icon(Icons.email),
+                      ),
+
+                      // Address
+                      MoodTextfield(
+                        labelText: 'Address',
+                        hintText: 'Enter full address',
+                        controller: patientCtrl.addressController,
+                        keyboardType: TextInputType.streetAddress,
+                        textCapitalization: TextCapitalization.words,
+                        maxLines: 3,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.home),
+                      ),
+
+                      // Emergency Contact
+                      MoodTextfield(
+                        labelText: 'Emergency Contact',
+                        hintText: 'Enter emergency contact number',
+                        controller: patientCtrl.emergencyContactController,
+                        keyboardType: TextInputType.phone,
+                        prefixIcon: const Icon(Icons.emergency),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Submit Button
+                      MoodPrimaryButton(
+                        title: isEdit ? 'Update Patient' : 'Register Patient',
+                        onPressed:
+                            patientState.isLoading
+                                ? null
+                                : () => isEdit ? editForm(patientCtrl) : submitForm(patientCtrl),
+                        state: patientState.isLoading ? ButtonState.loading : ButtonState.loaded,
+                        bGcolor: const Color(0xff4CAF50),
+                      ),
+
+                      // Clear Button
+                      MoodOutlineButton(title: 'Clear Form', onPressed: patientCtrl.clearForm, color: AppColors.kGrey),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-
-                // Phone
-                MoodTextfield(
-                  labelText: 'Phone Number *',
-                  hintText: 'Enter phone number',
-                  controller: patientCtrl.phoneController,
-                  keyboardType: TextInputType.phone,
-                  prefixIcon: const Icon(Icons.phone),
-                  validator: (value) => AppValidations.validatePhone(value),
-                ),
-
-                // Email
-                MoodTextfield(
-                  labelText: 'Email',
-                  hintText: 'Enter email address',
-                  controller: patientCtrl.emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: const Icon(Icons.email),
-                ),
-
-                // Address
-                MoodTextfield(
-                  labelText: 'Address',
-                  hintText: 'Enter full address',
-                  controller: patientCtrl.addressController,
-                  keyboardType: TextInputType.streetAddress,
-                  textCapitalization: TextCapitalization.words,
-                  maxLines: 3,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.home),
-                ),
-
-                // Emergency Contact
-                MoodTextfield(
-                  labelText: 'Emergency Contact',
-                  hintText: 'Enter emergency contact number',
-                  controller: patientCtrl.emergencyContactController,
-                  keyboardType: TextInputType.phone,
-                  prefixIcon: const Icon(Icons.emergency),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Submit Button
-                MoodPrimaryButton(
-                  title: isEdit ? 'Update Patient' : 'Register Patient',
-                  onPressed:
-                      patientState.isLoading ? null : () => isEdit ? editForm(patientCtrl) : submitForm(patientCtrl),
-                  state: patientState.isLoading ? ButtonState.loading : ButtonState.loaded,
-                  bGcolor: const Color(0xff4CAF50),
-                ),
-
-                // Clear Button
-                MoodOutlineButton(title: 'Clear Form', onPressed: patientCtrl.clearForm, color: AppColors.kGrey),
-
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
+
+            // JSON Preview Panel
+            if (context.isComputerOrLarger)
+              Flexible(
+                flex: 2,
+                child: FormSchemaJsonPreviewWidget(
+                  jsonSchema: CommonMethods.buildJsonPreview(patientCtrl.currentFormData.addPatient()),
+                  entityName: 'ProjectPatientEntity',
+                ),
+              ),
+          ],
         ),
       ),
     );

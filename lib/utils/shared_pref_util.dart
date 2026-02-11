@@ -11,6 +11,9 @@ enum SharedKeys {
   appointmentInstructionDontShowAgain,
   laboratoryInstructionDontShowAgain,
   diagnosisPatientId,
+  accessToken,
+  refreshToken,
+  tokenHash,
 }
 
 class SharedPrefsUtil {

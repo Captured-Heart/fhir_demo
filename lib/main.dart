@@ -51,6 +51,7 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp(
       // key: ValueKey(context.locale),
+      navigatorKey: navigatorKey,
       restorationScopeId: 'app',
       title: TextConstants.fhirDemo.tr(),
       debugShowCheckedModeBanner: false,

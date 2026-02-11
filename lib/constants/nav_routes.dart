@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class NavRoutes {
   static const String addMoodRoute = 'Add_Mood';
   static const String splashRoute = 'Splash';

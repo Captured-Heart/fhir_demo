@@ -1,5 +1,7 @@
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/prescriptions_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
@@ -72,7 +74,8 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
     final prescriptionctrl = ref.watch(prescriptionsController.notifier);
     final prescriptionState = ref.watch(prescriptionsController);
 
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       appBar: AppBar(
         title: const Text('Prescriptions'),
         backgroundColor: const Color(0xffFF9800),

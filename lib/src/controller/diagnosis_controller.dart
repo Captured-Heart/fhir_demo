@@ -51,6 +51,16 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
     state = state.copyWith(selectedSeverity: null, selectedStatus: null);
   }
 
+  ProjectDiagosisEntity get currentFormData => ProjectDiagosisEntity(
+    patientID: state.patientId?.removeCharactersFromPatientId ?? '',
+    diagnosis: _conditionController.text,
+    severity: state.selectedSeverity ?? 'Unknown',
+    clinicalStatus: state.selectedStatus ?? 'registered',
+    onsetDate: _onsetDateController.text.isNotEmpty ? DateTime.parse(_onsetDateController.text) : DateTime.now(),
+    notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+    recorder: _diagnosingDoctorController.text.isNotEmpty ? _diagnosingDoctorController.text : null,
+  );
+
   void setSelectedSeverity(String? severity) {
     state = state.copyWith(selectedSeverity: severity);
   }
@@ -183,17 +193,7 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
           return;
         }
 
-        final result = await _diagnosisRepository.createDiagnosis(
-          ProjectDiagosisEntity(
-            patientID: patientId,
-            diagnosis: _conditionController.text,
-            severity: state.selectedSeverity ?? '',
-            clinicalStatus: state.selectedStatus ?? '',
-            onsetDate: DateTime.parse(_onsetDateController.text),
-            notes: _notesController.text.isNotEmpty ? _notesController.text : null,
-            recorder: _diagnosingDoctorController.text.isNotEmpty ? _diagnosingDoctorController.text : null,
-          ),
-        );
+        final result = await _diagnosisRepository.createDiagnosis(currentFormData);
 
         if (result.isSuccess) {
           log('it was successful');
@@ -252,7 +252,8 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
             diagnosis: _conditionController.text,
             severity: state.selectedSeverity ?? '',
             clinicalStatus: state.selectedStatus ?? '',
-            onsetDate: DateTime.parse(_onsetDateController.text),
+            onsetDate:
+                _onsetDateController.text.isNotEmpty ? DateTime.parse(_onsetDateController.text) : DateTime.now(),
             notes: _notesController.text.isNotEmpty ? _notesController.text : null,
             recorder: _diagnosingDoctorController.text.isNotEmpty ? _diagnosingDoctorController.text : null,
           ),

@@ -1,5 +1,7 @@
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/lab_results_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
@@ -66,7 +68,8 @@ class _LabViewState extends ConsumerState<LabView> {
     final labResultsCtrl = ref.watch(labResultsController.notifier);
     final labResultState = ref.watch(labResultsController);
 
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       appBar: AppBar(
         title: const Text('Lab Results'),
         backgroundColor: const Color(0xff00BCD4),

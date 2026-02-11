@@ -1,4 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fhir_demo/constants/app_colors.dart';
@@ -21,7 +23,8 @@ class ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       appBar: NavBarPagesAppBar(title: TextConstants.profile.tr()),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

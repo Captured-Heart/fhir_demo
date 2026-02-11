@@ -68,6 +68,18 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
     state = state.copyWith(selectedGender: null);
   }
 
+  ProjectPatientEntity get currentFormData => ProjectPatientEntity(
+    id: '',
+    firstName: _firstNameController.text,
+    lastName: _lastNameController.text,
+    dateOfBirth: DateTime.parse(_dateOfBirthController.text),
+    phoneNumber: _phoneController.text,
+    gender: state.selectedGender,
+    email: _emailController.text.isNotEmpty ? _emailController.text : '',
+    address: _addressController.text.isNotEmpty ? _addressController.text : '',
+    emergencyContactNo: _emergencyContactController.text.isNotEmpty ? _emergencyContactController.text : null,
+  );
+
   formatBirthDate(DateTime date) {
     _dateOfBirthController.text =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -164,6 +176,15 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
     }
   }
 
+  FutureVoid openPatientInBrowser(Patient patient) async {
+    try {
+      await _patientRepository.openPatientInBrowser(patient);
+    } catch (e) {
+      log('Error opening patient in browser: $e');
+      // Handle exceptions
+    }
+  }
+
   // Fetch all patients by identifier
   FutureVoid fetchPatientsByIdentifier() async {
     try {
@@ -202,19 +223,7 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
 
       state = state.copyWith(isLoading: true);
       try {
-        final result = await _patientRepository.createPatient(
-          ProjectPatientEntity(
-            id: '',
-            firstName: _firstNameController.text,
-            lastName: _lastNameController.text,
-            dateOfBirth: DateTime.parse(_dateOfBirthController.text),
-            phoneNumber: _phoneController.text,
-            gender: state.selectedGender,
-            email: _emailController.text.isNotEmpty ? _emailController.text : '',
-            address: _addressController.text.isNotEmpty ? _addressController.text : '',
-            emergencyContactNo: _emergencyContactController.text.isNotEmpty ? _emergencyContactController.text : null,
-          ),
-        );
+        final result = await _patientRepository.createPatient(currentFormData);
 
         if (result.isSuccess) {
           log('it was successful');

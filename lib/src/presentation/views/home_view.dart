@@ -1,4 +1,6 @@
 import 'package:fhir_demo/hive_helper/cache_helper.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/custom_screen_header.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
@@ -29,7 +31,8 @@ class HomeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = CacheHelper.currentUser;
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -80,26 +83,46 @@ class HomeView extends ConsumerWidget {
                     SelectedServerText(),
 
                     // Grid of medical forms
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.9,
-                      ),
-                      itemCount: MedicalFormsData.medicalForms.length,
-                      itemBuilder: (context, index) {
-                        final medicalForm = MedicalFormsData.medicalForms[index];
-                        return MedicalFormCard(
-                          medicalForm: medicalForm,
-                          onTap: () {
-                            final String? route = navRouteForFormId(medicalForm.id);
+                    Builder(
+                      builder: (context) {
+                        final deviceDetails = context.deviceDetails;
+                        final crossAxisCount = deviceDetails.getGridColumns(
+                          mobile: 2,
+                          tablet: 3,
+                          computer: 3,
+                          largeScreen: 3,
+                          widescreen: 3,
+                        );
+                        final childAspectRatio = context.responsive<double>(
+                          mobile: 0.9,
+                          tablet: 0.95,
+                          computer: 1.0,
+                          largeScreen: 1.05,
+                          widescreen: 1.1,
+                        );
 
-                            if (route != null) {
-                              Navigator.pushNamed(context, route);
-                            }
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: childAspectRatio,
+                          ),
+                          itemCount: MedicalFormsData.medicalForms.length,
+                          itemBuilder: (context, index) {
+                            final medicalForm = MedicalFormsData.medicalForms[index];
+                            return MedicalFormCard(
+                              medicalForm: medicalForm,
+                              onTap: () {
+                                final String? route = navRouteForFormId(medicalForm.id);
+
+                                if (route != null) {
+                                  Navigator.pushNamed(context, route);
+                                }
+                              },
+                            );
                           },
                         );
                       },

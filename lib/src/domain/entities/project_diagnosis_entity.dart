@@ -82,7 +82,7 @@ class ProjectDiagosisEntity {
       diagnosis: map['diagnosis'] as String,
       severity: map['severity'] as String,
       clinicalStatus: map['clinicalStatus'] as String,
-      onsetDate: DateTime.parse(map['onsetDate'] as String),
+      onsetDate: map['onsetDate'] != null ? DateTime.parse(map['onsetDate'] as String) : DateTime.now(),
       notes: map['notes'] != null ? map['notes'] as String : null,
       recorder: map['recorder'] != null ? map['recorder'] as String : null,
     );

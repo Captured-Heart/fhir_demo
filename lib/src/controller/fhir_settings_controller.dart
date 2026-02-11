@@ -113,11 +113,4 @@ class FhirSettingsNotifier extends AutoDisposeNotifier<FhirSettingsEntity> {
       print('Error saving FHIR settings: $e');
     }
   }
-
-  /// Test connection to server (placeholder)
-  Future<bool> testConnection() async {
-    // TODO: Implement actual connection test
-    await Future.delayed(const Duration(seconds: 2));
-    return true;
-  }
 }

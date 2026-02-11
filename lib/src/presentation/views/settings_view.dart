@@ -1,9 +1,9 @@
 import 'package:fhir_demo/constants/app_images.dart';
-import 'package:fhir_demo/constants/button_state.dart';
 import 'package:fhir_demo/constants/fhir_server_type_enum.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/hive_helper/cache_helper.dart';
 import 'package:fhir_demo/src/presentation/widgets/buttons/outline_button.dart';
-import 'package:fhir_demo/src/presentation/widgets/buttons/primary_button.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/custom_screen_header.dart';
 import 'package:fhir_demo/src/presentation/widgets/textfield/app_textfield.dart';
 import 'package:flutter/material.dart';
@@ -22,24 +22,6 @@ class SettingsView extends ConsumerStatefulWidget {
 }
 
 class _SettingsViewState extends ConsumerState<SettingsView> {
-  bool _isTestingConnection = false;
-
-  Future<void> _testConnection() async {
-    setState(() => _isTestingConnection = true);
-
-    final notifier = ref.read(fhirSettingsProvider.notifier);
-    final success = await notifier.testConnection();
-
-    setState(() => _isTestingConnection = false);
-
-    if (mounted) {
-      context.showSnackBar(
-        message: success ? '✓ Connection successful!' : '✗ Connection failed. Please check your settings.',
-        isError: !success,
-      );
-    }
-  }
-
   void _resetDialog(FhirSettingsNotifier notifier) {
     showDialog(
       context: context,
@@ -67,7 +49,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final settingState = ref.watch(fhirSettingsProvider);
     final settingsCtrl = ref.read(fhirSettingsProvider.notifier);
 
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -207,7 +190,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     //     ),
 
                     //     // Reset to Defaults Button
-                        MoodOutlineButton(onPressed: () => _resetDialog(settingsCtrl), title: 'Reset to Defaults'),
+                    MoodOutlineButton(onPressed: () => _resetDialog(settingsCtrl), title: 'Reset to Defaults'),
                     //   ],
                     // ),
 

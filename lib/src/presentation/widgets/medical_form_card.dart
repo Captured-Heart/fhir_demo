@@ -36,31 +36,35 @@ class MedicalFormCard extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: medicalForm.color.withValues(alpha: 0.2), shape: BoxShape.circle),
-                child: Icon(medicalForm.icon, size: 32, color: medicalForm.color),
+                child: Center(child: Icon(medicalForm.icon, size: 32, color: medicalForm.color)),
               ),
             ),
 
             // Title
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                medicalForm.title,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: medicalForm.color),
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  medicalForm.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: medicalForm.color),
+                ),
               ),
             ),
 
             // Description
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                medicalForm.description,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: context.textTheme.bodySmall,
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  medicalForm.description,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodySmall,
+                ),
               ),
             ),
           ],

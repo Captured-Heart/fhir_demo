@@ -1,4 +1,4 @@
-import 'dart:developer';
+// import 'dart:developer';
 
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
@@ -16,7 +16,7 @@ class AppBarServerSwitch extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settingState = ref.watch(fhirSettingsProvider);
     final settingsCtrl = ref.read(fhirSettingsProvider.notifier);
-    inspect(settingState);
+    // inspect(settingState);
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.kWhite.withValues(alpha: 0.4)),
