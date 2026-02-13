@@ -280,6 +280,10 @@ class DiagnosisNotifier extends AutoDisposeNotifier<DiagnosisNotifierState> {
       }
     }
   }
+
+  void openDiagnosisInBrowser(DiagnosticReport diagnosis) {
+    _diagnosisRepository.openDiagnosisInBrowser(diagnosis);
+  }
 }
 
 class DiagnosisNotifierState {

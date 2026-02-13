@@ -1,6 +1,8 @@
+import 'package:fhir_demo/constants/common_methods.dart';
 import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/lab_results_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/forms_schema_preview_widget.dart';
 import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
@@ -33,6 +35,7 @@ class _LabViewState extends ConsumerState<LabView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupTextFieldListeners();
       if (isEdit && widget.labResult != null) {
         ref.read(labResultsController.notifier).populateFormForEdit(widget.labResult!);
       }
@@ -63,6 +66,18 @@ class _LabViewState extends ConsumerState<LabView> {
     ref.read(labResultsController.notifier).clearForm();
   }
 
+  _setupTextFieldListeners() {
+    final labResultsCtrl = ref.read(labResultsController.notifier);
+    labResultsCtrl.testNameController.addListener(() => setState(() {}));
+    labResultsCtrl.testCodeController.addListener(() => setState(() {}));
+    labResultsCtrl.resultValueController.addListener(() => setState(() {}));
+    labResultsCtrl.unitController.addListener(() => setState(() {}));
+    labResultsCtrl.referenceRangeController.addListener(() => setState(() {}));
+    labResultsCtrl.specimenController.addListener(() => setState(() {}));
+    labResultsCtrl.performerController.addListener(() => setState(() {}));
+    labResultsCtrl.notesController.addListener(() => setState(() {}));
+  }
+
   @override
   Widget build(BuildContext context) {
     final labResultsCtrl = ref.watch(labResultsController.notifier);
@@ -77,183 +92,205 @@ class _LabViewState extends ConsumerState<LabView> {
         actions: [AppBarServerSwitch()],
       ),
       body: SafeArea(
-        child: Form(
-          key: labResultsCtrl.formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                SelectedServerText(),
-                // Header
-                MoodText.text(
-                  text: 'Laboratory Test Results',
-                  context: context,
-                  textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Form(
+                key: labResultsCtrl.formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 20,
+                    children: [
+                      SelectedServerText(),
+                      // Header
+                      MoodText.text(
+                        text: 'Laboratory Test Results',
+                        context: context,
+                        textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
 
-                // Patient ID
-                PatientIdDropdown(
-                  onChanged: (value) => labResultsCtrl.setSelectedPatientId(value),
-                  isEdit: isEdit,
-                  patientIdController: labResultsCtrl.patientIdController,
-                ),
+                      // Patient ID
+                      PatientIdDropdown(
+                        onChanged: (value) => labResultsCtrl.setSelectedPatientId(value),
+                        isEdit: isEdit,
+                        patientIdController: labResultsCtrl.patientIdController,
+                      ),
 
-                // Test Name
-                MoodTextfield(
-                  labelText: 'Test Name *',
-                  hintText: 'e.g., Complete Blood Count',
-                  controller: labResultsCtrl.testNameController,
-                  textCapitalization: TextCapitalization.words,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.science),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter test name';
-                    }
-                    return null;
-                  },
-                ),
-
-                // Test Code
-                MoodTextfield(
-                  labelText: 'Test Code',
-                  hintText: 'e.g., CBC-001',
-                  controller: labResultsCtrl.testCodeController,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.qr_code),
-                ),
-
-                // Test Date
-                MoodTextfield(
-                  labelText: 'Test Date *',
-                  hintText: 'YYYY-MM-DD',
-                  controller: labResultsCtrl.testDateController,
-                  readOnly: true,
-                  onTap:
-                      () => _selectDate(
-                        onPicked: (pickedDate) {
-                          labResultsCtrl.formatTestDate(pickedDate);
+                      // Test Name
+                      MoodTextfield(
+                        labelText: 'Test Name *',
+                        hintText: 'e.g., Complete Blood Count',
+                        controller: labResultsCtrl.testNameController,
+                        textCapitalization: TextCapitalization.words,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.science),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter test name';
+                          }
+                          return null;
                         },
                       ),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select test date';
-                    }
-                    return null;
-                  },
+
+                      // Test Code
+                      MoodTextfield(
+                        labelText: 'Test Code *',
+                        hintText: 'e.g., CBC-001',
+                        controller: labResultsCtrl.testCodeController,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.qr_code),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter test code';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Test Date
+                      MoodTextfield(
+                        labelText: 'Test Date *',
+                        hintText: 'YYYY-MM-DD',
+                        controller: labResultsCtrl.testDateController,
+                        readOnly: true,
+                        onTap:
+                            () => _selectDate(
+                              onPicked: (pickedDate) {
+                                labResultsCtrl.formatTestDate(pickedDate);
+                              },
+                            ),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select test date';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Result Value
+                      MoodTextfield(
+                        labelText: 'Result Value *',
+                        hintText: 'Enter test result (Number)',
+                        controller: labResultsCtrl.resultValueController,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        prefixIcon: const Icon(Icons.analytics),
+                        validator: (value) => AppValidations.validateNumberOnly(value),
+                      ),
+
+                      // Unit
+                      MoodTextfield(
+                        labelText: 'Unit *',
+                        hintText: 'e.g., mg/dL, mmol/L',
+                        controller: labResultsCtrl.unitController,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.straighten),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter unit';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Reference Range
+                      MoodTextfield(
+                        labelText: 'Reference Range',
+                        hintText: 'e.g., 70-100 mg/dL',
+                        controller: labResultsCtrl.referenceRangeController,
+                        prefixIcon: const Icon(Icons.compare_arrows),
+                      ),
+
+                      // Interpretation
+                      AppDropDownWidget(
+                        value: labResultState.selectedInterpretation,
+                        labelText: 'Interpretation',
+                        hintText: 'Select interpretation',
+                        items: ['Normal', 'High', 'Low', 'Critical', 'Abnormal'],
+                        onChanged: (value) => labResultsCtrl.setSelectedInterpretation(value as String?),
+                      ),
+
+                      // Status
+                      AppDropDownWidget(
+                        value: labResultState.selectedStatus,
+                        labelText: 'Status *',
+                        hintText: 'Select status',
+                        items: ['Registered', 'Partial', 'Preliminary', 'Final', 'Amended', 'Corrected', 'Cancelled'],
+                        onChanged: (value) => labResultsCtrl.setSelectedStatus(value as String?),
+                      ),
+
+                      // Specimen Type
+                      MoodTextfield(
+                        labelText: 'Specimen Type',
+                        hintText: 'e.g., Blood, Urine',
+                        controller: labResultsCtrl.specimenController,
+                        inputFormatters: [],
+                        textCapitalization: TextCapitalization.words,
+                        prefixIcon: const Icon(Icons.biotech),
+                      ),
+
+                      // Performer/Lab
+                      MoodTextfield(
+                        labelText: 'Performer/Laboratory',
+                        hintText: 'Enter lab or performer name',
+                        controller: labResultsCtrl.performerController,
+                        inputFormatters: [],
+                        textCapitalization: TextCapitalization.words,
+                        prefixIcon: const Icon(Icons.business),
+                      ),
+
+                      // Clinical Notes
+                      MoodTextfield(
+                        labelText: 'Clinical Notes',
+                        hintText: 'Enter additional notes',
+                        controller: labResultsCtrl.notesController,
+                        inputFormatters: [],
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 3,
+                        prefixIcon: const Icon(Icons.notes),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Submit Button
+                      MoodPrimaryButton(
+                        title: isEdit ? 'Update Lab Result' : 'Record Lab Result',
+                        onPressed:
+                            labResultState.isLoading
+                                ? null
+                                : () {
+                                  if (!isEdit) {
+                                    submitLabResultForm(labResultsCtrl);
+                                  } else {
+                                    editLabResultForm(labResultsCtrl);
+                                  }
+                                },
+                        state: labResultState.isLoading ? ButtonState.loading : ButtonState.loaded,
+                        bGcolor: const Color(0xff00BCD4),
+                      ),
+
+                      // Clear Button
+                      MoodOutlineButton(title: 'Clear Form', onPressed: _clearForm, color: AppColors.kGrey),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-
-                // Result Value
-                MoodTextfield(
-                  labelText: 'Result Value *',
-                  hintText: 'Enter test result (Number)',
-                  controller: labResultsCtrl.resultValueController,
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  prefixIcon: const Icon(Icons.analytics),
-                  validator: (value) => AppValidations.validateNumberOnly(value),
-                ),
-
-                // Unit
-                MoodTextfield(
-                  labelText: 'Unit *',
-                  hintText: 'e.g., mg/dL, mmol/L',
-                  controller: labResultsCtrl.unitController,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.straighten),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter unit';
-                    }
-                    return null;
-                  },
-                ),
-
-                // Reference Range
-                MoodTextfield(
-                  labelText: 'Reference Range',
-                  hintText: 'e.g., 70-100 mg/dL',
-                  controller: labResultsCtrl.referenceRangeController,
-                  prefixIcon: const Icon(Icons.compare_arrows),
-                ),
-
-                // Interpretation
-                AppDropDownWidget(
-                  value: labResultState.selectedInterpretation,
-                  labelText: 'Interpretation',
-                  hintText: 'Select interpretation',
-                  items: ['Normal', 'High', 'Low', 'Critical', 'Abnormal'],
-                  onChanged: (value) => labResultsCtrl.setSelectedInterpretation(value as String?),
-                ),
-
-                // Status
-                AppDropDownWidget(
-                  value: labResultState.selectedStatus,
-                  labelText: 'Status *',
-                  hintText: 'Select status',
-                  items: ['Registered', 'Partial', 'Preliminary', 'Final', 'Amended', 'Corrected', 'Cancelled'],
-                  onChanged: (value) => labResultsCtrl.setSelectedStatus(value as String?),
-                ),
-
-                // Specimen Type
-                MoodTextfield(
-                  labelText: 'Specimen Type',
-                  hintText: 'e.g., Blood, Urine',
-                  controller: labResultsCtrl.specimenController,
-                  inputFormatters: [],
-                  textCapitalization: TextCapitalization.words,
-                  prefixIcon: const Icon(Icons.biotech),
-                ),
-
-                // Performer/Lab
-                MoodTextfield(
-                  labelText: 'Performer/Laboratory',
-                  hintText: 'Enter lab or performer name',
-                  controller: labResultsCtrl.performerController,
-                  inputFormatters: [],
-                  textCapitalization: TextCapitalization.words,
-                  prefixIcon: const Icon(Icons.business),
-                ),
-
-                // Clinical Notes
-                MoodTextfield(
-                  labelText: 'Clinical Notes',
-                  hintText: 'Enter additional notes',
-                  controller: labResultsCtrl.notesController,
-                  inputFormatters: [],
-                  textCapitalization: TextCapitalization.sentences,
-                  maxLines: 3,
-                  prefixIcon: const Icon(Icons.notes),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Submit Button
-                MoodPrimaryButton(
-                  title: isEdit ? 'Update Lab Result' : 'Record Lab Result',
-                  onPressed:
-                      labResultState.isLoading
-                          ? null
-                          : () {
-                            if (!isEdit) {
-                              submitLabResultForm(labResultsCtrl);
-                            } else {
-                              editLabResultForm(labResultsCtrl);
-                            }
-                          },
-                  state: labResultState.isLoading ? ButtonState.loading : ButtonState.loaded,
-                  bGcolor: const Color(0xff00BCD4),
-                ),
-
-                // Clear Button
-                MoodOutlineButton(title: 'Clear Form', onPressed: _clearForm, color: AppColors.kGrey),
-
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
+
+            if (context.isComputerOrLarger)
+              Flexible(
+                flex: 2,
+                child: FormSchemaJsonPreviewWidget(
+                  jsonSchema: CommonMethods.buildJsonPreview(labResultsCtrl.currentFormData.addLabResult()),
+                  entityName: 'ProjectLabResultEntity',
+                ),
+              ),
+          ],
         ),
       ),
     );

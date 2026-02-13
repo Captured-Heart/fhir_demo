@@ -126,6 +126,9 @@ class _PrescriptionResultDetailViewState extends ConsumerState<PrescriptionResul
                                           },
                                         );
                                       },
+                                      onViewFull: () {
+                                        prescriptionsCtrl.openPrescriptionInBrowser(result);
+                                      },
                                       onEdit: () {
                                         MedicalFormsData.navigateToEditForm(
                                           context,

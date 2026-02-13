@@ -5,7 +5,9 @@ import 'package:fhir_demo/constants/api_url.dart';
 import 'package:fhir_demo/src/domain/entities/api_response.dart';
 import 'package:fhir_demo/src/domain/entities/project_Appointment_entity.dart';
 import 'package:fhir_demo/src/domain/repository/network/network_calls_repository.dart';
+import 'package:fhir_demo/utils/url_launcher_method.dart';
 import 'package:fhir_r4/fhir_r4.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final appointmentRepositoryProvider = Provider<AppointmentRepository>((ref) {
@@ -23,6 +25,7 @@ abstract class AppointmentRepository {
   });
   Future<bool> deleteAppointmentById(String appointmentId);
   Future<List<Map<String, dynamic>>> searchAppointment();
+  Future<void> openAppointmentInBrowser(Appointment appointment);
 }
 
 class AppointmentRepositoryImpl implements AppointmentRepository {
@@ -41,12 +44,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         return ApiResponse.success(response);
       } else {
         return ApiResponse.error(
-          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          'Failed to create appointment: ${response.statusCode} ${response.errorMessage}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createAppointment: $e');
       return ApiResponse.error(e.toString());
     }
   }
@@ -82,12 +85,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         return ApiResponse.success(response);
       } else {
         return ApiResponse.error(
-          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          'Failed to edit appointment: ${response.statusCode} ${response.errorMessage}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in editAppointment: $e');
       return ApiResponse.error(e.toString());
     }
   }
@@ -114,18 +117,46 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       inspect(response.data);
       if (response.isSuccess) {
         final data = response.data as Map<String, dynamic>;
-        final patients = data['entry'] as List<dynamic>? ?? [];
-        log('Number of Prescription retrieved: ${patients.length}');
-        final patientMaps = patients.map((entry) => entry['resource'] as Map<String, dynamic>).toList();
-        final prescriptionData = patientMaps.map((e) => Appointment.fromJson(e)).toList();
+        final appointments = data['entry'] as List<dynamic>? ?? [];
+        log('Number of Appointments retrieved: ${appointments.length}');
+        final appointmentMaps =
+            appointments.map((entry) {
+              final link = entry['fullUrl'] as String?;
+              final resource = entry['resource'] as Map<String, dynamic>?;
+              return {'fullUrl': link, 'resource': resource};
+            }).toList();
+        final appointmentData =
+            appointmentMaps.map((e) {
+              final resource = e['resource'] as Map<String, dynamic>;
+              final link = e['fullUrl'] as String?;
+              final data = Appointment.fromJson(resource);
+              final finalData = data.copyWith(basedOn: [Reference(reference: link?.toFhirString)]);
+              return finalData;
+            }).toList();
 
-        return ApiResponse.success(prescriptionData);
+        return ApiResponse.success(appointmentData);
       } else {
-        return ApiResponse.error('Failed to create patient: ${response.statusCode} ${response.errorMessage}');
+        return ApiResponse.error('Failed to retrieve appointments: ${response.statusCode} ${response.errorMessage}');
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in retrieveAppointments: $e');
       return ApiResponse.error(e.toString());
+    }
+  }
+
+  @override
+  Future<void> openAppointmentInBrowser(Appointment appointment) async {
+    try {
+      final link = appointment.basedOn?.first.reference?.valueString;
+      if (link != null) {
+        return await UrlLauncherOptions.launchWeb(link, launchModeEXT: kIsWeb);
+      } else {
+        log('No valid URL found for appointment ${appointment.id}');
+        return;
+      }
+    } catch (e) {
+      log('Error opening appointment in browser: $e');
+      return;
     }
   }
 }

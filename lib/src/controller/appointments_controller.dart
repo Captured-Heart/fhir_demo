@@ -58,10 +58,13 @@ class AppointmentsNotifier extends AutoDisposeNotifier<AppointmentsNotifierState
   ProjectAppointmentEntity get currentFormData => ProjectAppointmentEntity(
     patientId: state.patientId?.removeCharactersFromPatientId ?? '',
     doctor: _doctorController.text,
-    appointmentType: state.selectedType!,
-    appointmentDate: DateTime.parse(_appointmentDateController.text),
+    appointmentType: state.selectedType ?? '',
+    appointmentDate:
+        _appointmentDateController.text.isNotEmptyOrNull
+            ? DateTime.parse(_appointmentDateController.text)
+            : DateTime.now(),
     appointmentTime: _appointmentTimeController.text,
-    status: state.selectedStatus!,
+    status: state.selectedStatus ?? '',
     reasonForVisit: _reasonController.text,
     location: _locationController.text,
     notes: _notesController.text,
@@ -311,6 +314,10 @@ class AppointmentsNotifier extends AutoDisposeNotifier<AppointmentsNotifierState
         state = state.copyWith(isLoading: false);
       }
     }
+  }
+
+  void openAppointmentInBrowser(Appointment appointment) async {
+    await _appointmentRepository.openAppointmentInBrowser(appointment);
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:fhir_demo/constants/api_constants.dart';
+import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 
@@ -36,11 +37,14 @@ class ProjectPrescriptionEntity {
         Dosage(
           text: instructions?.toFhirString,
           route: CodeableConcept(text: route.toFhirString),
-          doseAndRate: [DosageDoseAndRate(doseQuantity: Quantity(value: FhirDecimal(dosage), unit: 'mg'.toFhirString))],
+          doseAndRate: [
+            if (dosage.isNotEmptyOrNull)
+              DosageDoseAndRate(doseQuantity: Quantity(value: FhirDecimal(dosage), unit: 'mg'.toFhirString)),
+          ],
           timing: Timing(
             repeat: TimingRepeat(
-              frequency: FhirPositiveInt(int.tryParse(frequency)),
-              duration: FhirDecimal(duration),
+              frequency: frequency.isNotEmptyOrNull ? FhirPositiveInt(int.tryParse(frequency)) : null,
+              duration: duration.isNotEmptyOrNull ? FhirDecimal(duration) : null,
               durationUnit: UnitsOfTime.d,
             ),
           ),

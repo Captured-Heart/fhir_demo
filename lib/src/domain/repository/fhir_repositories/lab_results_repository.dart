@@ -5,7 +5,9 @@ import 'package:fhir_demo/constants/api_url.dart';
 import 'package:fhir_demo/src/domain/entities/api_response.dart';
 import 'package:fhir_demo/src/domain/entities/project_lab_result_entity.dart';
 import 'package:fhir_demo/src/domain/repository/network/network_calls_repository.dart';
+import 'package:fhir_demo/utils/url_launcher_method.dart';
 import 'package:fhir_r4/fhir_r4.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final labResultsRepositoryProvider = Provider<LabResultsRepository>((ref) {
@@ -23,6 +25,7 @@ abstract class LabResultsRepository {
   });
   Future<bool> deleteLabResultsById(String labResultsId);
   Future<List<Map<String, dynamic>>> searchLabResults();
+  Future<void> openLabResultsInBrowser(DiagnosticReport labResults);
 }
 
 class LabResultsRepositoryImpl implements LabResultsRepository {
@@ -112,8 +115,22 @@ class LabResultsRepositoryImpl implements LabResultsRepository {
         final data = response.data as Map<String, dynamic>;
         final patients = data['entry'] as List<dynamic>? ?? [];
         log('Number of Prescription retrieved: ${patients.length}');
-        final patientMaps = patients.map((entry) => entry['resource'] as Map<String, dynamic>).toList();
-        final prescriptionData = patientMaps.map((e) => DiagnosticReport.fromJson(e)).toList();
+        final patientMaps =
+            patients.map((entry) {
+              final link = entry['fullUrl'] as String?;
+              final resource = entry['resource'] as Map<String, dynamic>?;
+              return {'fullUrl': link, 'resource': resource};
+            }).toList();
+
+        //
+        final prescriptionData =
+            patientMaps.map((e) {
+              final resource = e['resource'] as Map<String, dynamic>;
+              final link = e['fullUrl'] as String?;
+              final data = DiagnosticReport.fromJson(resource);
+              final finalData = data.copyWith(basedOn: [Reference(reference: FhirString(link ?? ''))]);
+              return finalData;
+            }).toList();
 
         return ApiResponse.success(prescriptionData);
       } else {
@@ -122,6 +139,22 @@ class LabResultsRepositoryImpl implements LabResultsRepository {
     } catch (e) {
       log('Error in createLabResult: $e');
       return ApiResponse.error(e.toString());
+    }
+  }
+
+  @override
+  Future<void> openLabResultsInBrowser(DiagnosticReport labResults) async {
+    try {
+      final link = labResults.basedOn?.first.reference?.valueString;
+      if (link != null) {
+        return await UrlLauncherOptions.launchWeb(link, launchModeEXT: kIsWeb);
+      } else {
+        log('No valid URL found for patient ${labResults.id}');
+        return;
+      }
+    } catch (e) {
+      log('Error opening patient in browser: $e');
+      return;
     }
   }
 }

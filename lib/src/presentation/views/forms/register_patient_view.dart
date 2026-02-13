@@ -1,6 +1,5 @@
 import 'package:fhir_demo/constants/common_methods.dart';
 import 'package:fhir_demo/constants/responsive_extensions.dart';
-import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_demo/src/controller/patient_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
 import 'package:fhir_demo/src/presentation/widgets/forms_schema_preview_widget.dart';

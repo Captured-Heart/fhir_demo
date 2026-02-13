@@ -79,7 +79,7 @@ class ProjectPatientEntity {
       id: map['id'] as String,
       firstName: map['firstName'] as String,
       lastName: map['lastName'] as String,
-      dateOfBirth: DateTime.parse(map['dateOfBirth'] as String),
+      dateOfBirth: map['dateOfBirth'] != null ? DateTime.parse(map['dateOfBirth'] as String) : DateTime.now(),
       gender: map['gender'] != null ? map['gender'] as String : null,
       phoneNumber: map['phoneNumber'] as String,
       email: map['email'] != null ? map['email'] as String : null,

@@ -95,7 +95,7 @@ class _DiagnosisViewState extends ConsumerState<DiagnosisView> {
         child: Row(
           children: [
             Expanded(
-              flex: 3,
+              flex: 2,
               child: Form(
                 key: diagnosisCtrl.formKey,
                 child: SingleChildScrollView(

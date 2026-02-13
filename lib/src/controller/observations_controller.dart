@@ -51,6 +51,25 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
     patientIdController.clear();
   }
 
+  ProjectObservationEntity get currentFormData => ProjectObservationEntity(
+    patientId: state.patientId?.removeCharactersFromPatientId ?? '',
+    observationDate:
+        _observationDateController.text.isNotEmptyOrNull
+            ? DateTime.parse(_observationDateController.text)
+            : DateTime.now(),
+    systolicBloodPressure:
+        _bloodPressureController.text.isNotEmptyOrNull ? _bloodPressureController.text.split('/').first : null,
+    diastolicBloodPressure:
+        _bloodPressureController.text.isNotEmptyOrNull ? _bloodPressureController.text.split('/').last : null,
+    heartRate: _heartRateController.text.isNotEmptyOrNull ? _heartRateController.text : null,
+    temperature: num.tryParse(_temperatureController.text),
+    respiratoryRate: _respiratoryRateController.text.isNotEmptyOrNull ? _respiratoryRateController.text : null,
+    oxygenSaturation: num.tryParse(_oxygenSaturationController.text),
+    weight: num.tryParse(_weightController.text),
+    height: num.tryParse(_heightController.text),
+    clinicalNotes: _notesController.text.isNotEmptyOrNull ? _notesController.text : null,
+  );
+
   formatObservationDate(DateTime date) {
     _observationDateController.text =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -180,23 +199,7 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
           return;
         }
 
-        final result = await _observationRepository.createObservation(
-          ProjectObservationEntity(
-            patientId: patientId,
-            observationDate: DateTime.parse(_observationDateController.text),
-            systolicBloodPressure:
-                _bloodPressureController.text.isNotEmptyOrNull ? _bloodPressureController.text.split('/').first : null,
-            diastolicBloodPressure:
-                _bloodPressureController.text.isNotEmptyOrNull ? _bloodPressureController.text.split('/').last : null,
-            heartRate: _heartRateController.text.isNotEmptyOrNull ? _heartRateController.text : null,
-            temperature: num.tryParse(_temperatureController.text),
-            respiratoryRate: _respiratoryRateController.text.isNotEmptyOrNull ? _respiratoryRateController.text : null,
-            oxygenSaturation: num.tryParse(_oxygenSaturationController.text),
-            weight: num.tryParse(_weightController.text),
-            height: num.tryParse(_heightController.text),
-            clinicalNotes: _notesController.text.isNotEmptyOrNull ? _notesController.text : null,
-          ),
-        );
+        final result = await _observationRepository.createObservation(currentFormData);
 
         if (result.isSuccess) {
           log('it was successful');
@@ -274,6 +277,10 @@ class ObservationsNotifier extends AutoDisposeNotifier<ObservationsNotifierState
         state = state.copyWith(isLoading: false);
       }
     }
+  }
+
+  void openObservationInBrowser(Observation observation) {
+    _observationRepository.openObservationInBrowser(observation);
   }
 
   // -------- GETTERS --------

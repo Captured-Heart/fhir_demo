@@ -1,6 +1,8 @@
+import 'package:fhir_demo/constants/common_methods.dart';
 import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/prescriptions_controller.dart';
 import 'package:fhir_demo/src/presentation/widgets/dialogs/instruction_dialog.dart';
+import 'package:fhir_demo/src/presentation/widgets/forms_schema_preview_widget.dart';
 import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
@@ -34,6 +36,7 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupTextFieldListeners();
       if (isEdit) {
         ref.read(prescriptionsController.notifier).populateFormForEdit(widget.prescription!);
         return;
@@ -69,13 +72,25 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
     return MoodText.text(text: text, context: context, textStyle: context.textTheme.bodyMedium);
   }
 
+  _setupTextFieldListeners() {
+    final prescriptionctrl = ref.read(prescriptionsController.notifier);
+    prescriptionctrl.medicationController.addListener(() => setState(() {}));
+    prescriptionctrl.dosageController.addListener(() => setState(() {}));
+    prescriptionctrl.frequencyController.addListener(() => setState(() {}));
+    prescriptionctrl.durationController.addListener(() => setState(() {}));
+    prescriptionctrl.startDateController.addListener(() => setState(() {}));
+    prescriptionctrl.prescribingDoctorController.addListener(() => setState(() {}));
+    prescriptionctrl.instructionsController.addListener(() => setState(() {}));
+    prescriptionctrl.patientIdController.addListener(() => setState(() {}));
+  }
+
   @override
   Widget build(BuildContext context) {
     final prescriptionctrl = ref.watch(prescriptionsController.notifier);
     final prescriptionState = ref.watch(prescriptionsController);
 
     return AppScaffold(
-      compactView: context.isTabletOrLarger,
+      compactView: context.isComputerOrLarger,
       appBar: AppBar(
         title: const Text('Prescriptions'),
         backgroundColor: const Color(0xffFF9800),
@@ -83,168 +98,184 @@ class _PrescriptionsViewState extends ConsumerState<PrescriptionsView> {
         actions: [AppBarServerSwitch()],
       ),
       body: SafeArea(
-        child: Form(
-          key: prescriptionctrl.formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                SelectedServerText(),
-                // Header
-                MoodText.text(
-                  text: 'Prescription Details',
-                  context: context,
-                  textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Form(
+                key: prescriptionctrl.formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 20,
+                    children: [
+                      SelectedServerText(),
+                      // Header
+                      MoodText.text(
+                        text: 'Prescription Details',
+                        context: context,
+                        textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
 
-                PatientIdDropdown(
-                  onChanged: (patientId) {
-                    prescriptionctrl.updatePatientId(patientId);
-                  },
-                  isEdit: isEdit,
-                  patientIdController: prescriptionctrl.patientIdController,
-                ),
+                      PatientIdDropdown(
+                        onChanged: (patientId) {
+                          prescriptionctrl.updatePatientId(patientId);
+                        },
+                        isEdit: isEdit,
+                        patientIdController: prescriptionctrl.patientIdController,
+                      ),
 
-                // Medication Name
-                MoodTextfield(
-                  labelText: 'Medication Name *',
-                  hintText: 'Enter medication name',
-                  controller: prescriptionctrl.medicationController,
-                  textCapitalization: TextCapitalization.words,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.medication),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter medication name';
-                    }
-                    return null;
-                  },
-                ),
-
-                // Dosage
-                MoodTextfield(
-                  labelText: 'Dosage *',
-                  hintText: 'e.g., 500mg',
-                  controller: prescriptionctrl.dosageController,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.local_pharmacy),
-                  suffix: _suffixText('mg'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    return AppValidations.validateNumberOnly(value, fieldName: 'Dosage');
-                  },
-                ),
-
-                // Route
-                AppDropDownWidget(
-                  value: prescriptionState.selectedRoute,
-                  labelText: 'Route of Administration *',
-                  items: ['Oral', 'Intravenous', 'Intramuscular', 'Subcutaneous', 'Topical', 'Inhalation'],
-                  onChanged: (value) {
-                    prescriptionctrl.setSelectedRoute(value as String?);
-                  },
-                ),
-
-                // Frequency
-                MoodTextfield(
-                  labelText: 'Frequency *',
-                  hintText: 'e.g: 2 - (The unit is daily, and auto added)',
-                  controller: prescriptionctrl.frequencyController,
-                  suffix: _suffixText('daily'),
-                  inputFormatters: [],
-                  textCapitalization: TextCapitalization.sentences,
-                  keyboardType: TextInputType.number,
-                  prefixIcon: const Icon(Icons.schedule),
-                  validator: (value) {
-                    return AppValidations.validateNumberOnly(value, fieldName: 'Frequency');
-                  },
-                ),
-
-                // Duration
-                MoodTextfield(
-                  labelText: 'Duration *',
-                  hintText: 'e.g., 7 (Unit is in days)',
-                  controller: prescriptionctrl.durationController,
-                  suffix: _suffixText('days'),
-                  prefixIcon: const Icon(Icons.timer),
-                  inputFormatters: [],
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    return AppValidations.validateNumberOnly(value, fieldName: 'Duration');
-                  },
-                ),
-
-                // Start Date
-                MoodTextfield(
-                  labelText: 'Start Date *',
-                  hintText: 'YYYY-MM-DD',
-                  controller: prescriptionctrl.startDateController,
-                  readOnly: true,
-                  onTap:
-                      () => _selectDate(
-                        onPicked: (value) {
-                          prescriptionctrl.formatStartDate(value!);
+                      // Medication Name
+                      MoodTextfield(
+                        labelText: 'Medication Name *',
+                        hintText: 'Enter medication name',
+                        controller: prescriptionctrl.medicationController,
+                        textCapitalization: TextCapitalization.words,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.medication),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter medication name';
+                          }
+                          return null;
                         },
                       ),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select start date';
-                    }
-                    return null;
-                  },
+
+                      // Dosage
+                      MoodTextfield(
+                        labelText: 'Dosage *',
+                        hintText: 'e.g., 500mg',
+                        controller: prescriptionctrl.dosageController,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.local_pharmacy),
+                        suffix: _suffixText('mg'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          return AppValidations.validateNumberOnly(value, fieldName: 'Dosage');
+                        },
+                      ),
+
+                      // Route
+                      AppDropDownWidget(
+                        value: prescriptionState.selectedRoute,
+                        labelText: 'Route of Administration *',
+                        items: ['Oral', 'Intravenous', 'Intramuscular', 'Subcutaneous', 'Topical', 'Inhalation'],
+                        onChanged: (value) {
+                          prescriptionctrl.setSelectedRoute(value as String?);
+                        },
+                      ),
+
+                      // Frequency
+                      MoodTextfield(
+                        labelText: 'Frequency *',
+                        hintText: 'e.g: 2 - (The unit is daily, and auto added)',
+                        controller: prescriptionctrl.frequencyController,
+                        suffix: _suffixText('daily'),
+                        inputFormatters: [],
+                        textCapitalization: TextCapitalization.sentences,
+                        keyboardType: TextInputType.number,
+                        prefixIcon: const Icon(Icons.schedule),
+                        validator: (value) {
+                          return AppValidations.validateNumberOnly(value, fieldName: 'Frequency');
+                        },
+                      ),
+
+                      // Duration
+                      MoodTextfield(
+                        labelText: 'Duration *',
+                        hintText: 'e.g., 7 (Unit is in days)',
+                        controller: prescriptionctrl.durationController,
+                        suffix: _suffixText('days'),
+                        prefixIcon: const Icon(Icons.timer),
+                        inputFormatters: [],
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          return AppValidations.validateNumberOnly(value, fieldName: 'Duration');
+                        },
+                      ),
+
+                      // Start Date
+                      MoodTextfield(
+                        labelText: 'Start Date *',
+                        hintText: 'YYYY-MM-DD',
+                        controller: prescriptionctrl.startDateController,
+                        readOnly: true,
+                        onTap:
+                            () => _selectDate(
+                              onPicked: (value) {
+                                prescriptionctrl.formatStartDate(value!);
+                              },
+                            ),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select start date';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Prescribing Doctor
+                      MoodTextfield(
+                        labelText: 'Prescribing Doctor *',
+                        hintText: 'Enter doctor name',
+                        controller: prescriptionctrl.prescribingDoctorController,
+                        textCapitalization: TextCapitalization.words,
+                        inputFormatters: [],
+                        prefixIcon: const Icon(Icons.local_hospital),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter doctor name';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Special Instructions
+                      MoodTextfield(
+                        labelText: 'Special Instructions',
+                        hintText: 'Enter special instructions for patient',
+                        controller: prescriptionctrl.instructionsController,
+                        textCapitalization: TextCapitalization.sentences,
+                        inputFormatters: [],
+                        maxLines: 3,
+                        prefixIcon: const Icon(Icons.info_outline),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Submit Button
+                      MoodPrimaryButton(
+                        title: isEdit ? 'Edit Prescription' : 'Create Prescription',
+                        onPressed:
+                            prescriptionState.isLoading
+                                ? null
+                                : () => isEdit ? editForm(prescriptionctrl) : submitForm(prescriptionctrl),
+
+                        state: prescriptionState.isLoading ? ButtonState.loading : ButtonState.loaded,
+                        bGcolor: const Color(0xffFF9800),
+                      ),
+
+                      // Clear Button
+                      MoodOutlineButton(title: 'Clear Form', onPressed: _clearForm, color: AppColors.kGrey),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-
-                // Prescribing Doctor
-                MoodTextfield(
-                  labelText: 'Prescribing Doctor *',
-                  hintText: 'Enter doctor name',
-                  controller: prescriptionctrl.prescribingDoctorController,
-                  textCapitalization: TextCapitalization.words,
-                  inputFormatters: [],
-                  prefixIcon: const Icon(Icons.local_hospital),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter doctor name';
-                    }
-                    return null;
-                  },
-                ),
-
-                // Special Instructions
-                MoodTextfield(
-                  labelText: 'Special Instructions',
-                  hintText: 'Enter special instructions for patient',
-                  controller: prescriptionctrl.instructionsController,
-                  textCapitalization: TextCapitalization.sentences,
-                  inputFormatters: [],
-                  maxLines: 3,
-                  prefixIcon: const Icon(Icons.info_outline),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Submit Button
-                MoodPrimaryButton(
-                  title: isEdit ? 'Edit Prescription' : 'Create Prescription',
-                  onPressed:
-                      prescriptionState.isLoading
-                          ? null
-                          : () => isEdit ? editForm(prescriptionctrl) : submitForm(prescriptionctrl),
-
-                  state: prescriptionState.isLoading ? ButtonState.loading : ButtonState.loaded,
-                  bGcolor: const Color(0xffFF9800),
-                ),
-
-                // Clear Button
-                MoodOutlineButton(title: 'Clear Form', onPressed: _clearForm, color: AppColors.kGrey),
-
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
+
+            if (context.isComputerOrLarger)
+              Flexible(
+                flex: 2,
+                child: FormSchemaJsonPreviewWidget(
+                  jsonSchema: CommonMethods.buildJsonPreview(prescriptionctrl.currentFormData.addPrescription()),
+                  entityName: 'ProjectPrescriptionEntity',
+                ),
+              ),
+          ],
         ),
       ),
     );

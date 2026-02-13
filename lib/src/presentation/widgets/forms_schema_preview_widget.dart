@@ -64,28 +64,43 @@ class FormSchemaJsonPreviewWidget extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   spacing: AppSpacings.k12,
                                   children: [
-                                    SelectableText(
-                                      '$key :',
-                                      style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                                      // maxLines: 1,
+                                    MoodText.text(
+                                      text: '"$key":',
+                                      context: context,
+                                      textStyle: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
+                                    // SelectableText(
+                                    //   '$key :',
+                                    //   style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                    //   // maxLines: 1,
+                                    // ),
                                     Expanded(
-                                      child: SelectableText(switch (value.runtimeType) {
-                                        const (List) => () {
-                                          // ignore: invalid_runtime_check_with_js_interop_types
-                                          if ((value is JSArray) || (value is List<Map<String, dynamic>>)) {
-                                            final items = (value as List).map((item) => jsonEncode(item)).join('\n\n');
-                                            return items;
-                                          } else if (value is List<String>) {
-                                            return value.join('\n');
-                                          } else if (value is DateTime) {
-                                            return value.toIso8601String();
-                                          } else {
-                                            return value.toString();
-                                          }
-                                        }(),
-                                        _ => '$value',
-                                      }, style: context.textTheme.titleLarge?.copyWith(height: 1.2)),
+                                      child: SelectableText(
+                                        switch (value.runtimeType) {
+                                          const (List) => () {
+                                            // ignore: invalid_runtime_check_with_js_interop_types
+                                            if ((value is JSArray) || (value is List<Map<String, dynamic>>)) {
+                                              final items = (value as List)
+                                                  .map((item) => jsonEncode(item))
+                                                  .join('\n\n');
+                                              return items;
+                                            } else if (value is List<String>) {
+                                              return value.join('\n');
+                                            } else if (value is DateTime) {
+                                              return value.toIso8601String();
+                                            } else {
+                                              return value.toString();
+                                            }
+                                          }(),
+                                          _ => '$value',
+                                        },
+                                        style: context.textTheme.titleLarge?.copyWith(
+                                          height: 1.2,
+                                          fontWeight: FontWeight.w100,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),

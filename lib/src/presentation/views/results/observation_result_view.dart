@@ -131,6 +131,7 @@ class _ObservationResultDetailViewState extends ConsumerState<ObservationResultD
                                           },
                                         );
                                       },
+                                      onViewFull: () => observationCtrl.openObservationInBrowser(result),
                                       onEdit:
                                           () => MedicalFormsData.navigateToEditForm(
                                             context,

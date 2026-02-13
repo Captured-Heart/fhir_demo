@@ -1,5 +1,6 @@
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/appointments_controller.dart';
 import 'package:fhir_demo/src/domain/models/medical_forms_data.dart';
 import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
@@ -44,6 +45,7 @@ class _AppointmentResultDetailViewState extends ConsumerState<AppointmentResultD
     final appointmentCtrl = ref.read(appointmentsController.notifier);
 
     return AppScaffold(
+      compactView: context.isComputerOrLarger,
       appBar: AppBar(
         title: Text('${widget.categoryTitle} Records'),
         backgroundColor: widget.categoryColor,
@@ -119,6 +121,7 @@ class _AppointmentResultDetailViewState extends ConsumerState<AppointmentResultD
                                           },
                                         );
                                       },
+                                      onViewFull: () => appointmentCtrl.openAppointmentInBrowser(result),
                                       onEdit: () {
                                         MedicalFormsData.navigateToEditForm(
                                           context,

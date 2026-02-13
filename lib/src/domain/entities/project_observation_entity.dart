@@ -1,4 +1,5 @@
 import 'package:fhir_demo/constants/api_constants.dart';
+import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 
@@ -28,6 +29,12 @@ class ProjectObservationEntity {
     this.height,
     this.clinicalNotes,
   });
+  String _stringContainsSlash(String? value, {bool returnFirstPart = true}) {
+    if (value != null && value.contains('/')) {
+      return returnFirstPart ? value.split('/').first : value.split('/').last;
+    }
+    return value ?? '';
+  }
 
   MapStringDynamic addObservation({Observation? existingObservation}) {
     final body = Observation(
@@ -55,7 +62,10 @@ class ProjectObservationEntity {
                 ),
               ],
             ),
-            valueQuantity: Quantity(unit: 'mmHg'.toFhirString, value: num.parse(systolicBloodPressure!).toFhirDecimal),
+            valueQuantity: Quantity(
+              unit: 'mmHg'.toFhirString,
+              value: num.tryParse(_stringContainsSlash(systolicBloodPressure!))?.toFhirDecimal,
+            ),
           ),
 
         if (diastolicBloodPressure != null)
@@ -69,7 +79,10 @@ class ProjectObservationEntity {
                 ),
               ],
             ),
-            valueQuantity: Quantity(unit: 'mmHg'.toFhirString, value: num.parse(diastolicBloodPressure!).toFhirDecimal),
+            valueQuantity: Quantity(
+              unit: 'mmHg'.toFhirString,
+              value: num.tryParse(_stringContainsSlash(diastolicBloodPressure, returnFirstPart: false))?.toFhirDecimal,
+            ),
           ),
         if (heartRate != null)
           ObservationComponent(
@@ -82,7 +95,10 @@ class ProjectObservationEntity {
                 ),
               ],
             ),
-            valueQuantity: Quantity(unit: 'bpm'.toFhirString, value: num.parse(heartRate!).toFhirDecimal),
+            valueQuantity: Quantity(
+              unit: 'bpm'.toFhirString,
+              value: heartRate.isNotEmptyOrNull ? num.tryParse(heartRate!)?.toFhirDecimal : null,
+            ),
           ),
         if (temperature != null)
           ObservationComponent(
@@ -108,7 +124,10 @@ class ProjectObservationEntity {
                 ),
               ],
             ),
-            valueQuantity: Quantity(unit: 'breaths/min'.toFhirString, value: num.parse(respiratoryRate!).toFhirDecimal),
+            valueQuantity: Quantity(
+              unit: 'breaths/min'.toFhirString,
+              value: num.tryParse(respiratoryRate!)?.toFhirDecimal,
+            ),
           ),
         if (oxygenSaturation != null)
           ObservationComponent(

@@ -130,6 +130,9 @@ class _LabResultDetailViewState extends ConsumerState<LabResultDetailView> {
                                           },
                                         );
                                       },
+                                      onViewFull: () {
+                                        labResultsCtrl.openLabResultsInBrowser(result);
+                                      },
                                       onEdit: () {
                                         MedicalFormsData.navigateToEditForm(
                                           context,

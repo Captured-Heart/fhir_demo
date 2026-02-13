@@ -121,6 +121,9 @@ class _DiagnosisResultDetailViewState extends ConsumerState<DiagnosisResultDetai
                                           },
                                         );
                                       },
+                                      onViewFull: () {
+                                        diagnosisCtrl.openDiagnosisInBrowser(result);
+                                      },
                                       onEdit: () {
                                         MedicalFormsData.navigateToEditForm(
                                           context,

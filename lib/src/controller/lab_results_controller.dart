@@ -69,6 +69,22 @@ class LabResultsNotifier extends AutoDisposeNotifier<LabResultsNotifierState> {
     state = state.copyWith(selectedInterpretation: null, selectedStatus: null);
   }
 
+  ProjectLabResultEntity get currentFormData => ProjectLabResultEntity(
+    patientID: state.patientId?.removeCharactersFromPatientId ?? '',
+    testName: _testNameController.text.trim(),
+    testCode: _testCodeController.text.trim(),
+    testDate:
+        _testDateController.text.isNotEmptyOrNull ? DateTime.parse(_testDateController.text.trim()) : DateTime.now(),
+    resultValue: _resultValueController.text.trim(),
+    unit: _unitController.text.trim(),
+    referenceRange: _referenceRangeController.text.trim(),
+    specimenType: _specimenController.text.trim(),
+    laboratory: _performerController.text.trim(),
+    interpretation: state.selectedInterpretation ?? '',
+    status: state.selectedStatus ?? '',
+    notes: _notesController.text.trim(),
+  );
+
   void setSelectedInterpretation(String? interpretation) {
     state = state.copyWith(selectedInterpretation: interpretation);
   }
@@ -219,22 +235,7 @@ class LabResultsNotifier extends AutoDisposeNotifier<LabResultsNotifierState> {
           return;
         }
 
-        final result = await _labResultsRepository.createLabResults(
-          ProjectLabResultEntity(
-            patientID: patientId,
-            testName: _testNameController.text.trim(),
-            testCode: _testCodeController.text.trim(),
-            testDate: DateTime.parse(_testDateController.text.trim()),
-            resultValue: _resultValueController.text.trim(),
-            unit: _unitController.text.trim(),
-            referenceRange: _referenceRangeController.text.trim(),
-            specimenType: _specimenController.text.trim(),
-            laboratory: _performerController.text.trim(),
-            interpretation: state.selectedInterpretation!,
-            status: state.selectedStatus!,
-            notes: _notesController.text.trim(),
-          ),
-        );
+        final result = await _labResultsRepository.createLabResults(currentFormData);
 
         if (result.isSuccess) {
           log('it was successful');
@@ -324,6 +325,10 @@ class LabResultsNotifier extends AutoDisposeNotifier<LabResultsNotifierState> {
         state = state.copyWith(isLoading: false);
       }
     }
+  }
+
+  void openLabResultsInBrowser(DiagnosticReport labResults) async {
+    await _labResultsRepository.openLabResultsInBrowser(labResults);
   }
 }
 

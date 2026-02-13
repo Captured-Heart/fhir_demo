@@ -72,7 +72,7 @@ class PatientNotifier extends AutoDisposeNotifier<PatientNotifierState> {
     id: '',
     firstName: _firstNameController.text,
     lastName: _lastNameController.text,
-    dateOfBirth: DateTime.parse(_dateOfBirthController.text),
+    dateOfBirth: _dateOfBirthController.text.isNotEmpty ? DateTime.parse(_dateOfBirthController.text) : DateTime.now(),
     phoneNumber: _phoneController.text,
     gender: state.selectedGender,
     email: _emailController.text.isNotEmpty ? _emailController.text : '',

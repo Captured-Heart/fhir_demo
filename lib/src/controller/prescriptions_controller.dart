@@ -47,6 +47,17 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
     state = state.copyWith(selectedRoute: null);
   }
 
+  ProjectPrescriptionEntity get currentFormData => ProjectPrescriptionEntity(
+    patientID: state.patientId?.removeCharactersFromPatientId ?? '',
+    medication: _medicationController.text,
+    dosage: _dosageController.text,
+    route: state.selectedRoute ?? '',
+    frequency: _frequencyController.text,
+    startDate: _startDateController.text.isNotEmpty ? DateTime.parse(_startDateController.text) : DateTime.now(),
+    doctor: _prescribingDoctorController.text,
+    duration: _durationController.text.trim(),
+    instructions: _instructionsController.text,
+  );
   void setSelectedRoute(String? route) {
     state = state.copyWith(selectedRoute: route);
   }
@@ -183,20 +194,7 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
         return;
       }
       try {
-        final result = await _prescriptionRepository.createPrescription(
-          ProjectPrescriptionEntity(
-            patientID: patientId,
-            medication: _medicationController.text,
-            dosage: _dosageController.text,
-            route: state.selectedRoute ?? '',
-            frequency: _frequencyController.text,
-            startDate:
-                _startDateController.text.isNotEmpty ? DateTime.parse(_startDateController.text) : DateTime.now(),
-            doctor: _prescribingDoctorController.text,
-            duration: _durationController.text.trim(),
-            instructions: _instructionsController.text,
-          ),
-        );
+        final result = await _prescriptionRepository.createPrescription(currentFormData);
 
         if (result.isSuccess) {
           log('it was successful');
@@ -266,6 +264,10 @@ class PrescriptionsNotifier extends AutoDisposeNotifier<PrescriptionsNotifierSta
         state = state.copyWith(isLoading: false);
       }
     }
+  }
+
+  void openPrescriptionInBrowser(MedicationRequest prescription) {
+    _prescriptionRepository.openPrescriptionInBrowser(prescription);
   }
 
   // -------- GETTERS --------
