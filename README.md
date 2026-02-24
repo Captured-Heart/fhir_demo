@@ -7,8 +7,7 @@ A comprehensive Flutter application demonstrating the implementation of **FHIR (
 
 ## AN INTRO VIDEO OF THE APP
 
-Uploading fhir_demo_vid.MOV…
-
+https://github.com/user-attachments/assets/c0b6e1e9-dfed-449c-868b-984aac168776
 
 ## 📋 Table of Contents
 
