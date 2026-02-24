@@ -1,3 +1,4 @@
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/services/ui_service.dart';
 import 'package:fhir_demo/src/presentation/widgets/layouts/device_responsive_view.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,8 @@ class AppScaffold extends ConsumerWidget {
 
         return Scaffold(
           body: SafeArea(
+            bottom: !context.isMobileDevice,
+            top: !context.isMobileDevice,
             child: Builder(
               builder: (context) {
                 if (compactView && !details.isMobile) {

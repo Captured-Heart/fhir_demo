@@ -1,9 +1,7 @@
 import 'dart:convert';
-import 'dart:js_interop';
 
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
-import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/constants/spacings.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_demo/src/presentation/widgets/texts/texts_widget.dart';
@@ -16,7 +14,6 @@ class FormSchemaJsonPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!context.isComputerOrLarger) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: 40, left: 10, right: 10),
       child: ClipRRect(
@@ -80,8 +77,7 @@ class FormSchemaJsonPreviewWidget extends StatelessWidget {
                                       child: SelectableText(
                                         switch (value.runtimeType) {
                                           const (List) => () {
-                                            // ignore: invalid_runtime_check_with_js_interop_types
-                                            if ((value is JSArray) || (value is List<Map<String, dynamic>>)) {
+                                            if (value is List<Map<String, dynamic>> || value is List) {
                                               final items = (value as List)
                                                   .map((item) => jsonEncode(item))
                                                   .join('\n\n');

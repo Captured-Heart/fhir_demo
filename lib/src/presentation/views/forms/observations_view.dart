@@ -7,6 +7,7 @@ import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/patient_id_dropdown.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
+import 'package:fhir_demo/src/presentation/widgets/view_schema_widget.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
 import 'package:fhir_demo/utils/validations.dart';
 import 'package:fhir_r4/fhir_r4.dart';
@@ -96,7 +97,15 @@ class _ObservationsViewState extends ConsumerState<ObservationsView> {
         title: const Text('Vital Signs'),
         backgroundColor: const Color(0xffE91E63),
         foregroundColor: AppColors.kWhite,
-        actions: [AppBarServerSwitch()],
+        actions: [
+          AppBarServerSwitch(),
+          const SizedBox(width: 12),
+
+          ViewSchemaWidget(
+            jsonSchema: CommonMethods.buildJsonPreview(observationCtrl.currentFormData.addObservation()),
+            entityName: 'ObservationEntity',
+          ),
+        ],
       ),
       body: SafeArea(
         child: Row(
