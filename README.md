@@ -7,6 +7,9 @@ A comprehensive Flutter application demonstrating the implementation of **FHIR (
 
 ## AN INTRO VIDEO OF THE APP
 
+Uploading fhir_demo_vid.MOV…
+
+
 ## 📋 Table of Contents
 
 - [What is FHIR?](#what-is-fhir)
@@ -36,7 +39,7 @@ FHIR addresses critical healthcare challenges:
 
 1. **Data Interoperability**: Enables different healthcare systems to communicate and share patient data seamlessly
 2. **Patient Care Continuity**: Ensures patient information is accessible across different healthcare providers
-3. **Mobile Health Applications**: Facilitates development of patient-facing apps with secure access to health records
+3. **Mobile Health Applications**: Facilitates the development of patient-facing apps with secure access to health records
 4. **Clinical Decision Support**: Provides standardized data for AI and analytics tools
 5. **Regulatory Compliance**: Supports healthcare data standards required by regulations (e.g., HIPAA, GDPR)
 6. **Research & Analytics**: Standardized data format enables large-scale health data analysis
@@ -380,7 +383,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👤 Author
 
-**Marcel** - [Captured-Heart](https://github.com/Captured-Heart)
+**Nkpozi Marcel Kelechi** - [Captured-Heart](https://github.com/Captured-Heart)
 
 **Captured-Heart** on X: [@\_Captured_Heart](https://x.com/_Captured_Heart)
 
