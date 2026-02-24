@@ -1,15 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
+import 'package:fhir_demo/constants/extension.dart';
+import 'package:fhir_demo/utils/token_utils.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:fhir_demo/constants/api_constants.dart';
 import 'package:fhir_demo/src/controller/fhir_settings_controller.dart';
-import 'package:fhir_demo/src/domain/repository/network/token_repository.dart';
+// import 'package:fhir_demo/src/domain/repository/network/token_repository.dart';
 
 final dioRepositoryProvider = Provider<DioRepository>((ref) {
-  final tokenRepository = ref.read(tokenRepositoryProvider);
+  // final tokenRepository = ref.read(tokenRepositoryProvider);
   final fhirSettings = ref.watch(fhirSettingsProvider);
-  final repository = DioRepositoryImpl(tokenRepository, fhirSettings.serverBaseUrl);
+  final repository = DioRepositoryImpl(fhirSettings.serverBaseUrl);
 
   print('[DIO Provider] Creating DioRepository with base URL: ${fhirSettings.serverBaseUrl}');
 
@@ -77,10 +80,12 @@ abstract class DioRepository {
 class DioRepositoryImpl extends DioRepository {
   late Dio _dio;
   bool _isInitialized = false;
-  final TokenRepository _tokenService;
+  // final TokenRepository _tokenService;
+  final TokenUtils _tokenService = TokenUtils();
+
   String _baseUrl;
 
-  DioRepositoryImpl(this._tokenService, this._baseUrl);
+  DioRepositoryImpl(this._baseUrl);
 
   Dio get dio => _dio;
 
@@ -107,7 +112,10 @@ class DioRepositoryImpl extends DioRepository {
       final duration = Duration(seconds: timeoutSeconds);
       _dio.options.connectTimeout = duration;
       _dio.options.receiveTimeout = duration;
-      _dio.options.sendTimeout = duration;
+      // Only set sendTimeout on non-Web platforms
+      if (!kIsWeb) {
+        _dio.options.sendTimeout = duration;
+      }
       print('[DIO] Timeout updated to: ${timeoutSeconds}s');
     }
   }
@@ -154,7 +162,8 @@ class DioRepositoryImpl extends DioRepository {
         baseUrl: _baseUrl,
         connectTimeout: ApiConstants.connectTimeout,
         receiveTimeout: ApiConstants.receiveTimeout,
-        sendTimeout: ApiConstants.sendTimeout,
+        // sendTimeout only supported on non-Web platforms
+        sendTimeout: kIsWeb ? null : ApiConstants.sendTimeout,
         headers: ApiConstants.defaultHeaders,
       ),
     );
@@ -174,7 +183,7 @@ class DioRepositoryImpl extends DioRepository {
   /// Add authentication token to requests
   Future<void> _addAuthToken(RequestOptions options) async {
     try {
-      final token = await _tokenService.getValidToken();
+      final token = await _tokenService.getAccessToken();
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
       }
@@ -263,8 +272,8 @@ class DioRepositoryImpl extends DioRepository {
     // checkk if token is expired
     if (error.response?.statusCode == 401) {
       try {
-        final refreshed = await _tokenService.refreshToken();
-        if (refreshed) {
+        final refreshed = await _tokenService.getRefreshToken();
+        if (refreshed.isNotEmptyOrNull) {
           final options = error.requestOptions;
           await _addAuthToken(options);
           final response = await _dio.fetch(options);

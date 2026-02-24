@@ -44,6 +44,8 @@ extension LogErrorExtension on String {
       log(this, name: name ?? '');
     }
   }
+
+  String get removeCharactersFromPatientId => split(' - ').last.replaceAll('(', '').replaceAll(')', '');
 }
 
 extension DebugBorderWidgetExtension on Widget {

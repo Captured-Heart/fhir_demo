@@ -1,3 +1,5 @@
+import 'package:fhir_demo/constants/api_constants.dart';
+import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
 import 'package:fhir_r4/fhir_r4.dart';
 
@@ -30,22 +32,46 @@ class ProjectLabResultEntity {
     this.notes,
   });
 
-  MapStringDynamic addLabResult() {
+  MapStringDynamic addLabResult({DiagnosticReport? existingLabResult}) {
     final body = DiagnosticReport(
       status: DiagnosticReportStatus.values.firstWhere(
         (e) => e.valueString?.toLowerCase() == status.toLowerCase(),
         orElse: () => DiagnosticReportStatus.final_,
       ),
-      code: CodeableConcept(coding: [Coding(code: testCode.toFhirCode, display: testName.toFhirString)]),
+      code: CodeableConcept(
+        coding: [
+          if (testCode.isNotEmptyOrNull && testName.isNotEmptyOrNull)
+            Coding(code: testCode.toFhirCode, display: testName.toFhirString),
+        ],
+      ),
       subject: Reference(reference: 'Patient/$patientID'.toFhirString),
       effectiveDateTime: testDate.toFhirDateTime,
       issued: DateTime.now().toFhirInstant,
-      result: [Reference(display: '$resultValue $unit'.toFhirString)],
+      result: [
+        if (resultValue.isNotEmptyOrNull && unit.isNotEmptyOrNull)
+          Reference(display: '$resultValue $unit'.toFhirString),
+      ],
       conclusion: notes?.toFhirString,
       conclusionCode: interpretation != null ? [CodeableConcept(text: interpretation?.toFhirString)] : null,
       specimen: specimenType != null ? [Reference(display: specimenType?.toFhirString)] : null,
       performer: laboratory != null ? [Reference(display: laboratory?.toFhirString)] : null,
+      identifier: [Identifier(value: ApiConstants.projectIdentifierLabResult.toFhirString)],
+      presentedForm: referenceRange.isNotEmptyOrNull ? [Attachment(title: referenceRange?.toFhirString)] : null,
     );
+    if (existingLabResult != null) {
+      final updatedBody = existingLabResult.copyWith(
+        status: body.status,
+        code: body.code,
+        subject: body.subject,
+        issued: body.issued,
+        result: body.result,
+        conclusion: body.conclusion,
+        conclusionCode: body.conclusionCode,
+        specimen: body.specimen,
+        performer: body.performer,
+      );
+      return updatedBody.toJson();
+    }
     return body.toJson();
   }
 }

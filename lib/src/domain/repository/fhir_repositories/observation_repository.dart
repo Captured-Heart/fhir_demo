@@ -5,7 +5,9 @@ import 'package:fhir_demo/constants/api_url.dart';
 import 'package:fhir_demo/src/domain/entities/api_response.dart';
 import 'package:fhir_demo/src/domain/entities/project_observation_entity.dart';
 import 'package:fhir_demo/src/domain/repository/network/network_calls_repository.dart';
+import 'package:fhir_demo/utils/url_launcher_method.dart';
 import 'package:fhir_r4/fhir_r4.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final observationRepositoryProvider = Provider<ObservationRepository>((ref) {
@@ -17,9 +19,13 @@ abstract class ObservationRepository {
   Future<ApiResponse> createObservation(ProjectObservationEntity observationData);
   Future<Map<String, dynamic>?> getObservationById(String observationId);
   Future<ApiResponse<List<Observation>>> getAllObservationByIdentifier();
-  Future<Map<String, dynamic>?> editObservationById(String observationId);
+  Future<ApiResponse> editObservationById({
+    required ProjectObservationEntity observationData,
+    required Observation existingObservation,
+  });
   Future<bool> deleteObservationById(String observationId);
   Future<List<Map<String, dynamic>>> searchObservation();
+  Future<void> openObservationInBrowser(Observation observation);
 }
 
 class ObservationRepositoryImpl implements ObservationRepository {
@@ -38,12 +44,14 @@ class ObservationRepositoryImpl implements ObservationRepository {
         return ApiResponse.success(response);
       } else {
         return ApiResponse.error(
-          'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
+          'Failed to create Observation: ${response.statusCode} ${response.errorMessage}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createObservation: $e');
+      inspect(e);
+
       return ApiResponse.error(e.toString());
     }
   }
@@ -65,9 +73,27 @@ class ObservationRepositoryImpl implements ObservationRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> editObservationById(String observationId) async {
-    // TODO: implement editObservationById
-    throw UnimplementedError();
+  Future<ApiResponse> editObservationById({
+    required ProjectObservationEntity observationData,
+    required Observation existingObservation,
+  }) async {
+    try {
+      final response = await networkCallsRepository.put(
+        '${ApiUrl.fhirObservation.url}/${existingObservation.id}',
+        data: observationData.addObservation(existingObservation: existingObservation),
+      );
+      if (response.isSuccess) {
+        return ApiResponse.success(response);
+      } else {
+        return ApiResponse.error(
+          'Failed to create Observation: ${response.statusCode} ${response.errorMessage}',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      log('Error in createObservation: $e');
+      return ApiResponse.error(e.toString());
+    }
   }
 
   @override
@@ -94,16 +120,44 @@ class ObservationRepositoryImpl implements ObservationRepository {
         final data = response.data as Map<String, dynamic>;
         final patients = data['entry'] as List<dynamic>? ?? [];
         log('Number of Prescription retrieved: ${patients.length}');
-        final patientMaps = patients.map((entry) => entry['resource'] as Map<String, dynamic>).toList();
-        final prescriptionData = patientMaps.map((e) => Observation.fromJson(e)).toList();
+        final patientMaps =
+            patients.map((entry) {
+              final link = entry['fullUrl'] as String?;
+              final resource = entry['resource'] as Map<String, dynamic>?;
+              return {'fullUrl': link, 'resource': resource};
+            }).toList();
+        final prescriptionData =
+            patientMaps.map((e) {
+              final resource = e['resource'] as Map<String, dynamic>;
+              final link = e['fullUrl'] as String?;
+              final data = Observation.fromJson(resource);
+              final finalData = data.copyWith(basedOn: [Reference(reference: link != null ? FhirString(link) : null)]);
+              return finalData;
+            }).toList();
 
         return ApiResponse.success(prescriptionData);
       } else {
-        return ApiResponse.error('Failed to create patient: ${response.statusCode} ${response.errorMessage}');
+        return ApiResponse.error('Failed to create Observation: ${response.statusCode} ${response.errorMessage}');
       }
     } catch (e) {
-      log('Error in createPatient: $e');
+      log('Error in createObservation: $e');
       return ApiResponse.error(e.toString());
+    }
+  }
+
+  @override
+  Future<void> openObservationInBrowser(Observation observation) async {
+    try {
+      final link = observation.basedOn?.first.reference?.valueString;
+      if (link != null) {
+        return await UrlLauncherOptions.launchWeb(link, launchModeEXT: kIsWeb);
+      } else {
+        log('No valid URL found for patient ${observation.id}');
+        return;
+      }
+    } catch (e) {
+      log('Error opening patient in browser: $e');
+      return;
     }
   }
 }

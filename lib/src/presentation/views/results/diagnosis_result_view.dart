@@ -1,8 +1,11 @@
 import 'package:fhir_demo/constants/app_colors.dart';
 import 'package:fhir_demo/constants/extension.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/controller/diagnosis_controller.dart';
 import 'package:fhir_demo/src/domain/models/medical_forms_data.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/app_bar_server_switch.dart';
+import 'package:fhir_demo/src/presentation/widgets/shared/detail_row_results.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/no_records_found.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/results_row_action_button.dart';
 import 'package:fhir_demo/src/presentation/widgets/shared/selected_server_text.dart';
@@ -40,7 +43,8 @@ class _DiagnosisResultDetailViewState extends ConsumerState<DiagnosisResultDetai
     'what is categoryTitle: ${widget.categoryTitle}'.logError();
     final diagnosisState = ref.watch(diagnosisController);
     final diagnosisCtrl = ref.read(diagnosisController.notifier);
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       appBar: AppBar(
         title: Text('${widget.categoryTitle} Records'),
         backgroundColor: widget.categoryColor,
@@ -95,13 +99,12 @@ class _DiagnosisResultDetailViewState extends ConsumerState<DiagnosisResultDetai
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   spacing: 8,
                                   children: [
-                                    _buildDetailRow(context, 'Status', result.status.toString()),
-                                    _buildDetailRow(context, 'ID', result.id?.toString() ?? 'N/A'),
+                                    BuildDetailRow(label: 'Status', value: result.status.toString()),
+                                    BuildDetailRow(label: 'ID', value: result.id?.toString() ?? 'N/A'),
                                     if (result.presentedForm != null)
-                                      _buildDetailRow(
-                                        context,
-                                        result.presentedForm!.first.fhirType,
-                                        result.presentedForm?.first.title?.toString() ?? 'No details',
+                                      BuildDetailRow(
+                                        label: result.presentedForm!.first.fhirType,
+                                        value: result.presentedForm?.first.title?.toString() ?? 'No details',
                                       ),
                                     const Divider(height: 24),
 
@@ -117,6 +120,9 @@ class _DiagnosisResultDetailViewState extends ConsumerState<DiagnosisResultDetai
                                             }
                                           },
                                         );
+                                      },
+                                      onViewFull: () {
+                                        diagnosisCtrl.openDiagnosisInBrowser(result);
                                       },
                                       onEdit: () {
                                         MedicalFormsData.navigateToEditForm(
@@ -137,23 +143,6 @@ class _DiagnosisResultDetailViewState extends ConsumerState<DiagnosisResultDetai
                   ),
                 ],
               ),
-    );
-  }
-
-  Widget _buildDetailRow(BuildContext context, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 80,
-          child: MoodText.text(
-            text: '$label:',
-            context: context,
-            textStyle: context.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-        ),
-        Expanded(child: MoodText.text(text: value, context: context, textStyle: context.textTheme.bodySmall)),
-      ],
     );
   }
 }

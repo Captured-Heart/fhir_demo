@@ -1,9 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:fhir_demo/constants/responsive_extensions.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fhir_demo/constants/text_constants.dart';
-import 'package:fhir_demo/hive_helper/cache_helper.dart';
+// import 'package:fhir_demo/hive_helper/cache_helper.dart';
 import 'package:fhir_demo/src/controller/bottom_nav_controller.dart';
 import 'package:fhir_demo/src/presentation/views/home_view.dart';
 import 'package:fhir_demo/src/presentation/views/results_view.dart';
@@ -39,12 +41,13 @@ class _BottomNavViewState extends ConsumerState<BottomNavView> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(bottomNavBarIndexProvider);
-    final currentThreshold = CacheHelper.getClaimedThreshold();
-    print('Current Threshold: $currentThreshold');
+    // final currentThreshold = CacheHelper.getClaimedThreshold();
+    // print('Current Threshold: $currentThreshold');
 
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       body: bodyWidget(currentIndex: currentIndex),
-      bottomNavigationBar: BottomNavigationBar(
+      bottom: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: currentIndex,
         onTap: (index) {

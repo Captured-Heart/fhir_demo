@@ -27,6 +27,7 @@ class ApiConstants {
   };
 
   static const String projectIdentifier = 'fhirdemoproject';
+  static const String projectIdentifierLabResult = 'fhirdemoprojectlabresult';
 
   // Error Messages
   static const String networkError = 'Network connection failed. Please check your internet.';

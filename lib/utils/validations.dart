@@ -59,4 +59,27 @@ class AppValidations {
     }
     return null;
   }
+
+  static String? validateNumberOnly(String? value, {String fieldName = "This field"}) {
+    if (value == null || value.isEmpty) {
+      return '$fieldName cannot be empty';
+    }
+    final numericRegex = RegExp(r'^\d+$');
+    if (!numericRegex.hasMatch(value)) {
+      return '$fieldName must contain only digits';
+    }
+    return null;
+  }
+
+  //120/80
+  static String? validateBloodPressure(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Blood Pressure is optional
+    }
+    final bpRegex = RegExp(r'^\d{2,3}/\d{2,3}$');
+    if (!bpRegex.hasMatch(value)) {
+      return 'format must be (e.g., 120/80)';
+    }
+    return null;
+  }
 }

@@ -6,7 +6,10 @@ void showInstructionDialog({
   required BuildContext context,
   required String title,
   required String subtitle,
+  String? fullSubtitle,
   required SharedKeys sharedKeys,
+  bool showCheckbox = true,
+  VoidCallback? onOkPressed,
 }) {
   bool dontShowAgain = false;
   final dontShow = SharedPrefsUtil.getBool(key: sharedKeys.name);
@@ -23,35 +26,37 @@ void showInstructionDialog({
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '$subtitle All fields marked with * are mandatory.\n\nYou can also select the FHIR server from the top right dropdown.',
+                fullSubtitle ??
+                    '$subtitle All fields marked with * are mandatory.\n\nYou can also select the FHIR server from the top right dropdown.',
               ),
 
               const SizedBox(height: 16),
               // do not show this dialog again checkbox
-              StatefulBuilder(
-                builder: (context, setState) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Checkbox(
-                        value: dontShowAgain,
-                        visualDensity: VisualDensity.compact,
-                        onChanged: (value) {
-                          setState(() {
-                            dontShowAgain = value ?? false;
-                          });
+              if (showCheckbox)
+                StatefulBuilder(
+                  builder: (context, setState) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: dontShowAgain,
+                          visualDensity: VisualDensity.compact,
+                          onChanged: (value) {
+                            setState(() {
+                              dontShowAgain = value ?? false;
+                            });
 
-                          SharedPrefsUtil.setBool(key: sharedKeys.name, value: value ?? false);
-                        },
-                      ),
-                      Text("Don't show this again", style: context.textTheme.bodySmall),
-                    ],
-                  );
-                },
-              ),
+                            SharedPrefsUtil.setBool(key: sharedKeys.name, value: value ?? false);
+                          },
+                        ),
+                        Text("Don't show this again", style: context.textTheme.bodySmall),
+                      ],
+                    );
+                  },
+                ),
             ],
           ),
-          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK'))],
+          actions: [TextButton(onPressed: onOkPressed ?? () => Navigator.of(context).pop(), child: const Text('OK'))],
         ),
   );
 }

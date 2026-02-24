@@ -44,3 +44,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 android/build/ios/XCBuildData/PIFCache/
+Integrating FHIR with Flutter - Part 1.md
+.gitignore
+.gitignore
+outline for fhir_demo blogpost.md
+Integrating FHIR with Flutter - Part 2 (Implementation).md

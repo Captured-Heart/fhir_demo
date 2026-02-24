@@ -1,4 +1,6 @@
+import 'package:fhir_demo/src/controller/patient_controller.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +16,7 @@ import 'package:fhir_demo/src/presentation/views/forms/diagnosis_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/prescriptions_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/observations_view.dart';
 import 'package:fhir_demo/src/presentation/views/forms/appointments_view.dart';
-import 'package:fhir_demo/src/presentation/views/forms/lab_results_view.dart';
+import 'package:fhir_demo/src/presentation/views/forms/lab_view.dart';
 import 'package:fhir_demo/src/presentation/widgets/themes/app_themes.dart';
 
 void main() async {
@@ -22,9 +24,16 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   await SharedPrefsUtil.init();
 
-  await CacheHelper.openHiveBoxes();
+  if (!kIsWeb || !kIsWasm) {
+    await CacheHelper.openHiveBoxes();
+  }
+  final container = ProviderContainer();
+  container.read(themeProvider.notifier).loadCurrentThemeMode();
+  container.read(patientController.notifier);
   runApp(
-    ProviderScope(
+    
+    UncontrolledProviderScope(
+      container: container,
       child: EasyLocalization(
         supportedLocales: const [Locale('en', 'US'), Locale('de', 'DE')],
         saveLocale: true,
@@ -46,6 +55,7 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp(
       // key: ValueKey(context.locale),
+      navigatorKey: navigatorKey,
       restorationScopeId: 'app',
       title: TextConstants.fhirDemo.tr(),
       debugShowCheckedModeBanner: false,
@@ -70,7 +80,7 @@ class MainApp extends ConsumerWidget {
               NavRoutes.prescriptionsRoute => PrescriptionsView(),
               NavRoutes.observationsRoute => ObservationsView(),
               NavRoutes.appointmentsRoute => AppointmentsView(),
-              NavRoutes.labResultsRoute => LabResultsView(),
+              NavRoutes.labResultsRoute => LabView(),
               _ => SplashView(),
             };
           },

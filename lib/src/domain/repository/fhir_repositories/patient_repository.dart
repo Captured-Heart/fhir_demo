@@ -5,7 +5,9 @@ import 'package:fhir_demo/constants/api_url.dart';
 import 'package:fhir_demo/src/domain/entities/api_response.dart';
 import 'package:fhir_demo/src/domain/entities/project_patient_entity.dart';
 import 'package:fhir_demo/src/domain/repository/network/network_calls_repository.dart';
+import 'package:fhir_demo/utils/url_launcher_method.dart';
 import 'package:fhir_r4/fhir_r4.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final patientRepositoryProvider = Provider<PatientRepository>((ref) {
@@ -21,6 +23,7 @@ abstract class PatientRepository {
   Future<bool> deletePatientById(String patientId);
   Future<List<Map<String, dynamic>>> searchPatients();
   Future<bool> validatePatientExists(String patientId);
+  Future<void> openPatientInBrowser(Patient patient);
 }
 
 class PatientRepositoryImpl implements PatientRepository {
@@ -33,7 +36,8 @@ class PatientRepositoryImpl implements PatientRepository {
       final response = await networkCallsRepository.post(ApiUrl.fhirPatient.url, data: patientData.addPatient());
       inspect(response);
       if (response.isSuccess) {
-        return ApiResponse.success(response);
+        final data = Patient.fromJson(response.data as Map<String, dynamic>);
+        return ApiResponse.success(data);
       } else {
         return ApiResponse.error(
           'Failed to create patient: ${response.statusCode} ${response.errorMessage}',
@@ -112,8 +116,23 @@ class PatientRepositoryImpl implements PatientRepository {
         final data = response.data as Map<String, dynamic>;
         final patients = data['entry'] as List<dynamic>? ?? [];
         log('Number of patients retrieved: ${patients.length}');
-        final patientMaps = patients.map((entry) => entry['resource'] as Map<String, dynamic>).toList();
-        final patientData = patientMaps.map((e) => Patient.fromJson(e)).toList();
+        final patientMaps =
+            patients.map((entry) {
+              final link = entry['fullUrl'] as String?;
+              final resource = entry['resource'] as Map<String, dynamic>?;
+              return {'fullUrl': link, 'resource': resource};
+            }).toList();
+
+        final patientData =
+            patientMaps.map((e) {
+              final resource = e['resource'] as Map<String, dynamic>;
+              final link = e['fullUrl'] as String?;
+              final data = Patient.fromJson(resource);
+              final finalData = data.copyWith(
+                link: [PatientLink(other: Reference(reference: link?.toFhirString), type: LinkType.refer)],
+              );
+              return finalData;
+            }).toList();
 
         return ApiResponse.success(patientData);
       } else {
@@ -134,6 +153,22 @@ class PatientRepositoryImpl implements PatientRepository {
     } catch (e) {
       log('[Patient Validation] Error checking patient existence: $e');
       return false;
+    }
+  }
+
+  @override
+  Future<void> openPatientInBrowser(Patient patient) async {
+    try {
+      final link = patient.link?.first.other.reference?.valueString;
+      if (link != null) {
+        return await UrlLauncherOptions.launchWeb(link, launchModeEXT: kIsWeb);
+      } else {
+        log('No valid URL found for patient ${patient.id}');
+        return;
+      }
+    } catch (e) {
+      log('Error opening patient in browser: $e');
+      return;
     }
   }
 }

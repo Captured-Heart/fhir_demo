@@ -1,0 +1,35 @@
+{
+  "name": "fhir_demo",
+  "short_name": "fhir_demo",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0175C2",
+  "theme_color": "#0175C2",
+  "description": "FHIR Demo is a Flutter application that demonstrates the use of the FHIR (Fast Healthcare Interoperability Resources) standard for healthcare data exchange. It provides a user-friendly interface to interact with FHIR servers, allowing users to view and manage healthcare data such as patient records, prescriptions, and more.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

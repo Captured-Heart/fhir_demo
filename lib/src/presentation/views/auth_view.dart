@@ -1,6 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:fhir_demo/constants/responsive_extensions.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/fhir_repository.dart';
+import 'package:fhir_demo/src/presentation/widgets/layouts/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,7 +40,8 @@ class AuthView extends ConsumerWidget {
       }
     });
 
-    return Scaffold(
+    return AppScaffold(
+      compactView: context.isTabletOrLarger,
       body: Stack(
         fit: StackFit.expand,
         children: [
