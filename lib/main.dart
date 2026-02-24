@@ -1,5 +1,6 @@
 import 'package:fhir_demo/src/controller/patient_controller.dart';
 import 'package:fhir_demo/utils/shared_pref_util.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,11 +24,14 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   await SharedPrefsUtil.init();
 
-  await CacheHelper.openHiveBoxes();
+  if (!kIsWeb || !kIsWasm) {
+    await CacheHelper.openHiveBoxes();
+  }
   final container = ProviderContainer();
   container.read(themeProvider.notifier).loadCurrentThemeMode();
   container.read(patientController.notifier);
   runApp(
+    
     UncontrolledProviderScope(
       container: container,
       child: EasyLocalization(

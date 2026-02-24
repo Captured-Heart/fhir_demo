@@ -1,6 +1,11 @@
+<div align="left">
+   <img src="./assets/images/png/app_logo.png" width="200" height="200" color="0xFF2676FC"/>
+
 # FHIR Demo Project
 
 A comprehensive Flutter application demonstrating the implementation of **FHIR (Fast Healthcare Interoperability Resources)** standards for healthcare data management and interoperability.
+
+## AN INTRO VIDEO OF THE APP
 
 ## 📋 Table of Contents
 
@@ -75,15 +80,15 @@ This Flutter application demonstrates a complete FHIR-compliant healthcare manag
 
 ### Technical Features
 
-- 🔐 Secure token-based authentication
-- 🔄 Automatic token refresh
-- 🌐 Network connectivity monitoring
-- 🔁 Smart retry mechanism with exponential backoff
-- 📱 Responsive UI with Material Design
-- 🌍 Multi-language support (English, German)
-- 💾 Local data persistence with Hive
-- 🎨 Custom reusable UI components
-- 🌙 Dark/Light theme support
+- Secure token-based authentication
+- Automatic token refresh
+- Network connectivity monitoring
+- Smart retry mechanism with exponential backoff
+- Responsive UI with Material Design
+- Multi-language support (English, German)
+- Local data persistence with Hive
+- Custom reusable UI components
+- Dark/Light theme support
 
 ## 📁 Code Structure
 
@@ -151,7 +156,7 @@ lib/
 - **Clean Architecture**: Separation of concerns with domain, data, and presentation layers
 - **State Management**: Riverpod for reactive state management
 - **Repository Pattern**: Abstracts data sources from business logic
-- **Dependency Injection**: Providers for dependency management
+- **Dependency Injection**: Riverpod for dependency management
 
 ## 📦 Libraries Used
 
@@ -351,14 +356,6 @@ Add new translations in `assets/l10n/`:
 
 Customize app themes in `lib/src/presentation/widgets/themes/app_themes.dart`
 
-## 🔐 Security Features
-
-- **Secure Storage**: Sensitive data encrypted using `flutter_secure_storage`
-- **Token Management**: JWT token handling with automatic refresh
-- **HTTPS Only**: All API communications use secure protocols
-- **Data Validation**: Input validation before FHIR resource creation
-- **Error Handling**: Comprehensive error handling with user-friendly messages
-
 ## 🌐 Supported FHIR Resources
 
 - Patient
@@ -411,8 +408,6 @@ This is a demo application for educational and development purposes. It should *
 Always consult with healthcare compliance experts before deploying healthcare applications in production.
 
 ---
-
-**Version**: 0.0.3+3
 
 **Last Updated**: January 2026
 

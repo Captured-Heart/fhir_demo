@@ -17,18 +17,22 @@ class CacheHelper {
   static late final LocalStorage<PatientsServerIdEntity> _patientServerIdLocalModel;
 
   static FutureVoid openHiveBoxes() async {
-    await Hive.initFlutter();
-    //i register adapters here
-    registerAdapters();
-    // i open the boxes (userEntity and moodEntity)
-    _userLocalModel = LocalRepository<UserEntity>(await Hive.openBox(HiveAdapters.userEntity));
+    try {
+      await Hive.initFlutter();
+      //i register adapters here
+      registerAdapters();
+      // i open the boxes (userEntity and moodEntity)
+      _userLocalModel = LocalRepository<UserEntity>(await Hive.openBox(HiveAdapters.userEntity));
 
-    _sessionUserLocalModel = LocalRepository<UserEntity>(await Hive.openBox(HiveAdapters.sessionUser));
-    _threshHoldLocalModel = LocalRepository<num>(await Hive.openBox(HiveAdapters.threshHold));
-    _themeLocalModel = LocalRepository<String>(await Hive.openBox(HiveAdapters.theme));
-    _patientServerIdLocalModel = LocalRepository<PatientsServerIdEntity>(
-      await Hive.openBox(HiveAdapters.patientServerIdEntity),
-    );
+      _sessionUserLocalModel = LocalRepository<UserEntity>(await Hive.openBox(HiveAdapters.sessionUser));
+      _threshHoldLocalModel = LocalRepository<num>(await Hive.openBox(HiveAdapters.threshHold));
+      _themeLocalModel = LocalRepository<String>(await Hive.openBox(HiveAdapters.theme));
+      _patientServerIdLocalModel = LocalRepository<PatientsServerIdEntity>(
+        await Hive.openBox(HiveAdapters.patientServerIdEntity),
+      );
+    } catch (e) {
+      'what is the error in opening hive boxes $e'.logError();
+    }
   }
 
   // Getters for the local models

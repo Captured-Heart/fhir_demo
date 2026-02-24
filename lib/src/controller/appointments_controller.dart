@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:fhir_demo/constants/extension.dart';
 import 'package:fhir_demo/constants/typedefs.dart';
-import 'package:fhir_demo/src/domain/entities/project_Appointment_entity.dart';
+import 'package:fhir_demo/src/domain/entities/project_appointment_entities.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/appontment_repository.dart';
 import 'package:fhir_demo/src/domain/repository/fhir_repositories/patient_repository.dart';
 import 'package:fhir_r4/fhir_r4.dart';

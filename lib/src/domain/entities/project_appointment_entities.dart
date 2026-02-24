@@ -38,7 +38,7 @@ class ProjectAppointmentEntity {
         ),
         AppointmentParticipant(
           actor: Reference(
-            // reference: 'Practitioner/$doctor'.toFhirString, //! I DON'T HAAVE DOCTOR ID
+            // reference: 'Practitioner/$doctor'.toFhirString,
             display: doctor.toFhirString,
           ),
           status: ParticipationStatus.accepted,

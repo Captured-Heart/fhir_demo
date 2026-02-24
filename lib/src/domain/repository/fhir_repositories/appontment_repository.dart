@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:fhir_demo/constants/api_constants.dart';
 import 'package:fhir_demo/constants/api_url.dart';
 import 'package:fhir_demo/src/domain/entities/api_response.dart';
-import 'package:fhir_demo/src/domain/entities/project_Appointment_entity.dart';
+import 'package:fhir_demo/src/domain/entities/project_appointment_entities.dart';
 import 'package:fhir_demo/src/domain/repository/network/network_calls_repository.dart';
 import 'package:fhir_demo/utils/url_launcher_method.dart';
 import 'package:fhir_r4/fhir_r4.dart';
